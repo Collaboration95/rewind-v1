@@ -26,15 +26,26 @@
     "@types/react": "~19.2.2",
     "eslint": "^9.0.0",
     "eslint-config-expo": "~57.0.2",
+    "prettier": "3.9.6",
     "typescript": "~6.0.3"
   },
   "scripts": {
     "start": "expo start",
-    "ios": "expo start --ios",
-    "android": "expo start --android",
+    "start:clear": "expo start --clear",
+    "open:ios": "expo start --ios",
+    "open:android": "expo start --android",
+    "ios": "npm run open:ios",
+    "android": "npm run open:android",
     "web": "expo start --web",
+    "build:ios": "expo run:ios",
+    "build:android": "expo run:android",
+    "build:web": "expo export --platform web --output-dir dist",
     "lint": "eslint .",
+    "format": "npm run format:write",
+    "format:write": "prettier --write .",
+    "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit",
-    "test": "node scripts/test.cjs"
+    "test": "node scripts/test.cjs",
+    "check": "npm run format:check && npm run lint && npm run typecheck && npm run test"
   }
 }

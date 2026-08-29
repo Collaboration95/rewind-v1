@@ -7,6 +7,12 @@
     "scheme": "rewind",
     "userInterfaceStyle": "dark",
     "plugins": ["expo-router"],
+    "ios": {
+      "bundleIdentifier": "com.rewind.v1"
+    },
+    "android": {
+      "package": "com.rewind.v1"
+    },
     "experiments": {
       "typedRoutes": true
     }

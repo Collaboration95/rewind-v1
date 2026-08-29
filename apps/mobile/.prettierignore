@@ -1,0 +1,15 @@
+node_modules/
+.expo/
+dist/
+web-build/
+coverage/
+ios/
+android/
+package-lock.json
+expo-env.d.ts
+*.app
+*.ipa
+*.apk
+*.aab
+*.xcarchive
+*.tsbuildinfo

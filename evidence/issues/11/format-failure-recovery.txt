@@ -1,0 +1,38 @@
+# Deliberate format-check failure and recovery
+
+The failing fixture was synthetic, was created only for this verification run,
+and was removed afterward. It is not part of the committed source tree.
+The commands below are reproducible from the repository root.
+
+## Deliberate failure
+
+```text
+$ cd apps/mobile
+$ npm run format:check
+
+> rewind-mobile@0.1.0 format:check
+> prettier --check .
+
+Checking formatting...
+[warn] tests/format-failure-fixture.js
+[warn] Code style issues found in the above file. Run Prettier with --write to fix.
+
+exit code: 1
+```
+
+## Recovery
+
+```text
+$ ./node_modules/.bin/prettier --write tests/format-failure-fixture.js
+tests/format-failure-fixture.js 17ms
+
+$ npm run format:check
+
+> rewind-mobile@0.1.0 format:check
+> prettier --check .
+
+Checking formatting...
+All matched files use Prettier code style!
+
+exit code: 0
+```
