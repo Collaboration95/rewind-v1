@@ -1,0 +1,63 @@
+name: Agent implementation ticket
+description: Create a bounded, evidence-ready Rewind task.
+title: "[V1] "
+labels:
+  - type:story
+  - phase:v1
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this only for a genuinely new, independently reviewable unit of work.
+        Add it to the Rewind Project, set dependencies, and include the stable
+        `agent-orchestration:issue-key` marker before marking it Ready.
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objective and value
+      description: State the smallest user or system outcome this ticket proves.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: In scope and explicitly out of scope
+      description: Keep this limited to one coherent branch and review.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Observable acceptance criteria
+      description: Use checkboxes with behaviour a reviewer can see or test.
+      placeholder: "- [ ] ..."
+    validations:
+      required: true
+  - type: textarea
+    id: boundaries
+    attributes:
+      label: Files, modules, and interfaces
+      description: Name likely boundaries and forbidden layers.
+    validations:
+      required: true
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification and evidence
+      description: Include commands, device/manual path, and required synthetic screenshot/proof.
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies, risks, and stop conditions
+      description: Link blockers and state when an agent must escalate.
+    validations:
+      required: true
+  - type: input
+    id: stable-key
+    attributes:
+      label: Stable issue key
+      description: "Format: agent-orchestration:issue-key=v1-area-sequence"
+    validations:
+      required: true
