@@ -1,0 +1,14 @@
+{
+  "expo": {
+    "name": "Rewind V1",
+    "slug": "rewind-v1",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "rewind",
+    "userInterfaceStyle": "dark",
+    "plugins": ["expo-router"],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
