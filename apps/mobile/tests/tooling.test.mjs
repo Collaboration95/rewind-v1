@@ -62,8 +62,9 @@ test('mobile workflow is cached, local-only, and emulator-free', () => {
   assert.match(workflow, /push:/);
   assert.match(workflow, /pull_request:/);
   assert.match(workflow, /workflow_dispatch:/);
-  assert.match(workflow, /actions\/checkout@v6/);
-  assert.match(workflow, /actions\/setup-node@v7/);
+  assert.match(workflow, /runs-on: ubuntu-24\.04/);
+  assert.match(workflow, /actions\/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd/);
+  assert.match(workflow, /actions\/setup-node@820762786026740c76f36085b0efc47a31fe5020/);
   assert.match(workflow, /node-version-file: apps\/mobile\/\.nvmrc/);
   assert.match(workflow, /cache: npm/);
   assert.match(workflow, /cache-dependency-path: apps\/mobile\/package-lock\.json/);

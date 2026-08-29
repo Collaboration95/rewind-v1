@@ -21,3 +21,7 @@ The dry-run command catalog confirmed that every root target delegates into
 `make start` was also started successfully; Metro printed the local Expo Go
 URL and exited cleanly after Ctrl-C. `make build-web` exported the web bundle
 to the ignored `apps/mobile/dist/` directory.
+
+The committed workflow uses the fixed `ubuntu-24.04` runner and immutable
+commit references for `actions/checkout` and `actions/setup-node`, with the
+release tags recorded as comments beside each SHA.
