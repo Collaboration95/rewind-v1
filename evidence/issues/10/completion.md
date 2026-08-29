@@ -35,7 +35,7 @@ testing work.
 
 ![Initial Rewind V1 screen](https://raw.githubusercontent.com/Collaboration95/rewind-v1/d66fa5c40274a7e9fa6c5eed10bf63a2320a4b65/evidence/issues/10/initial-screen.png)
 
-[Strict project-audit JSON](https://github.com/Collaboration95/rewind-v1/blob/d66fa5c40274a7e9fa6c5eed10bf63a2320a4b65/evidence/issues/10/premium-audit.json)
+[Strict project-audit JSON](https://github.com/Collaboration95/rewind-v1/blob/77ec00dbe9924e19d8ed4af2d6dc7401f5729d7d/evidence/issues/10/premium-audit.json)
 
 ## Limitations
 
