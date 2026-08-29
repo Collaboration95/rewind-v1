@@ -1,6 +1,8 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 
+import { colors } from '../components/tokens';
+
 export default function RootLayout() {
   return (
     <>
@@ -8,9 +10,11 @@ export default function RootLayout() {
       <Stack
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: '#0B1114' },
+          contentStyle: { backgroundColor: colors.ink },
         }}
-      />
+      >
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      </Stack>
     </>
   );
 }
