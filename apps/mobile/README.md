@@ -32,6 +32,7 @@ From this directory:
 npm ci
 npm run lint
 npm run typecheck
+npm run test -- --runInBand
 npm run start
 ```
 
@@ -50,7 +51,9 @@ longer provides the required module surface.
 The first route is an original, static Rewind landing state: it identifies the
 V1 local-only boundary and uses synthetic copy only. Camera capture, persistence,
 tabs, chat, reminders, playback, and the simulation console are intentionally
-left for their dependency-ordered tickets.
+left for their dependency-ordered tickets. The scaffold includes one
+dependency-free Node smoke test for its Router/config boundary; the Jest and
+React Native Testing Library setup belongs to issue #13.
 
 Do not turn the repository root into an Expo application. Keep generated native
 folders, build output, local environment files, and credentials out of Git.

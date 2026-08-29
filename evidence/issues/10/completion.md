@@ -23,10 +23,10 @@ testing work.
 - `npx expo install --check` — PASS; dependencies are up to date.
 - `npx expo-doctor` — PASS; 21/21 checks passed.
 - `npx expo config --type public` — PASS; resolves Rewind V1 with SDK 57 and portrait orientation.
+- `npm run test -- --runInBand` — PASS; deterministic dependency-free scaffold smoke test (Jest/RNTL remains #13 work).
 - `npm run ios` / Expo Go launch — PASS on iPhone 15 Pro simulator, iOS 17.5, with the route bundled and displayed.
 - Accessibility tree inspection — PASS; the route exposes the expected heading and stable IDs without interactive controls requiring action selectors.
 - `audit_project.py --mode strict` — PASS; 0 findings, recorded in `premium-audit.json`.
-- `npm run test -- --runInBand` — deferred; this scaffold intentionally does not add a Jest harness, which is part of the dependency-ordered testing ticket (#13).
 
 ## Evidence
 

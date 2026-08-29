@@ -1,7 +1,7 @@
 {
   "findings": [],
   "mode": "strict",
-  "projectRoot": "/Users/speedpowermac/Documents/projects/CODE_MAIN/NUS/SWE5006/rewind-v1",
+  "projectRoot": ".",
   "schemaVersion": 1,
   "summary": {
     "errors": 0,
