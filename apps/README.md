@@ -1,8 +1,9 @@
 # Applications
 
-Runnable products live here. V1 will create `mobile/` as an Expo/React Native
-application; no generated app has been committed yet.
+Runnable products live here. V1's Expo/React Native application is in
+[`mobile/`](mobile/); its package, Router routes, native configuration, and
+local development instructions stay inside that directory.
 
-See [`../planning/v1-prototype-spec.md`](../planning/v1-prototype-spec.md) for
-the intended mobile architecture and [`../AGENTS.md`](../AGENTS.md) before
-initialising it.
+See [`mobile/README.md`](mobile/README.md) for the current scaffold workflow and
+[`../planning/v1-prototype-spec.md`](../planning/v1-prototype-spec.md) for the
+intended mobile architecture.
