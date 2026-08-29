@@ -1,7 +1,8 @@
 # Issue #10 completion evidence
 
 - Issue: [#10 — Scaffold the Expo mobile workspace under apps/mobile](https://github.com/Collaboration95/rewind-v1/issues/10)
-- Implementation commit: [d66fa5c40274a7e9fa6c5eed10bf63a2320a4b65](https://github.com/Collaboration95/rewind-v1/commit/d66fa5c40274a7e9fa6c5eed10bf63a2320a4b65)
+- Scaffold commit: [d66fa5c40274a7e9fa6c5eed10bf63a2320a4b65](https://github.com/Collaboration95/rewind-v1/commit/d66fa5c40274a7e9fa6c5eed10bf63a2320a4b65)
+- Verification follow-up: [b0a030b2d382e8831fc4ddc9060103f8e710ded6](https://github.com/Collaboration95/rewind-v1/commit/b0a030b2d382e8831fc4ddc9060103f8e710ded6)
 - PR: [#42 — feat(mobile): scaffold local-only Expo workspace](https://github.com/Collaboration95/rewind-v1/pull/42)
 
 ## Scope delivered
