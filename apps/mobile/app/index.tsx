@@ -14,10 +14,7 @@ const palette = {
 export default function HomeScreen() {
   return (
     <SafeAreaView edges={['top', 'bottom']} style={styles.safeArea} testID="screen-home">
-      <ScrollView
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.headerRow}>
           <Text style={styles.eyebrow}>REWIND / V1</Text>
           <View

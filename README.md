@@ -16,3 +16,18 @@ submission itself.
 - [`docs/`](docs/README.md) — future engineering documentation and diagrams.
 - [`evidence/`](evidence/README.md) — versioned ticket-completion proof.
 - [`AGENTS.md`](AGENTS.md) — mandatory operating contract for coding agents.
+
+## Developer commands
+
+Run `make help` from the repository root for the local development, Fast
+Refresh, platform, build, and quality commands. The shortest clean-start path
+is:
+
+```bash
+make install
+make start
+```
+
+Run `make check` before opening a pull request. The mobile workflow also runs
+the same static checks and a local web export without requiring an emulator,
+cloud account, or repository secret.

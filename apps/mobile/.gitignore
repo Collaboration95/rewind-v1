@@ -11,6 +11,13 @@ coverage/
 # Generated native projects
 /ios/
 /android/
+build/
+DerivedData/
+*.app
+*.ipa
+*.apk
+*.aab
+*.xcarchive
 
 # Local environment and credentials
 .env*

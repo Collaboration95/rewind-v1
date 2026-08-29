@@ -24,35 +24,50 @@ path; a local development build remains the intended path once native device
 capabilities are added. CocoaPods and Android tooling are not required by this
 initial screen and are not claimed as verified here.
 
-## Install and run
+## Install, hot reload, and build
 
-From this directory:
-
-```bash
-npm ci
-npm run lint
-npm run typecheck
-npm run test -- --runInBand
-npm run start
-```
-
-For the verified simulator path, boot an available iPhone simulator and run:
+Run these commands from the repository root. `make start` starts the Expo
+development server; Expo's default development mode provides Fast Refresh for
+JavaScript and TypeScript edits. Use `make start-clear` when a stale Metro
+cache is suspected.
 
 ```bash
-npm run ios
+make install
+make start
+make start-clear
 ```
 
-The Expo CLI menu can also open the project in Expo Go. Later native-capability
-tickets must document a development-build command separately when Expo Go no
-longer provides the required module surface.
+The target shortcuts are:
+
+| Command              | Purpose                                                                |
+| -------------------- | ---------------------------------------------------------------------- |
+| `make ios`           | Open the app through Expo Go on an iOS simulator or device.            |
+| `make android`       | Open the app through Expo Go on an Android target.                     |
+| `make web`           | Start the Expo web development server.                                 |
+| `make build-ios`     | Generate and build a local iOS development app with Xcode.             |
+| `make build-android` | Generate and build a local Android development app.                    |
+| `make build-web`     | Export a static web bundle to ignored `apps/mobile/dist/`.             |
+| `make check`         | Parse the workflow, then run format-check, lint, typecheck, and tests. |
+| `make help`          | Print the complete command catalog.                                    |
+
+`make build-ios` requires Xcode and CocoaPods; `make build-android` requires
+the Android SDK and ADB. Expo local native builds generate ignored `ios/` and
+`android/` directories. After a native build, ordinary TypeScript/JavaScript
+edits still use `make start` and Fast Refresh; rebuild only after native
+dependencies or app configuration changes. No EAS, cloud build, or remote
+service command is included in this local-first tooling layer.
+
+The tested local runtime is pinned in `.nvmrc` at Node `26.3.1`. The checked
+workflow uses the same version, installs with the committed npm lockfile, and
+runs without an emulator or secret.
 
 ## Scope of this ticket
 
 The first route is an original, static Rewind landing state: it identifies the
 V1 local-only boundary and uses synthetic copy only. Camera capture, persistence,
 tabs, chat, reminders, playback, and the simulation console are intentionally
-left for their dependency-ordered tickets. The scaffold includes one
-dependency-free Node smoke test for its Router/config boundary; the Jest and
+left for their dependency-ordered tickets. The scaffold includes dependency-free
+Node contract tests for its Router/config and tooling boundaries; the Jest and
 React Native Testing Library setup belongs to issue #13.
 
 Do not turn the repository root into an Expo application. Keep generated native

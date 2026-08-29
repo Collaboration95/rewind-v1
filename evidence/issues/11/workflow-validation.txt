@@ -1,0 +1,23 @@
+# Workflow and development-command validation
+
+The first command runs from the repository root. The formatting command is
+run from `apps/mobile`, where the project-local Prettier binary is installed.
+
+```text
+$ cd /Users/speedpowermac/Documents/projects/CODE_MAIN/NUS/SWE5006/rewind-v1
+$ ruby -e 'require "yaml"; YAML.load_file(".github/workflows/mobile-quality.yml"); puts "Workflow YAML OK"'
+Workflow YAML OK
+exit code: 0
+
+$ cd apps/mobile
+$ ./node_modules/.bin/prettier --check ../../.github/workflows/mobile-quality.yml
+Checking formatting...
+All matched files use Prettier code style!
+exit code: 0
+```
+
+The dry-run command catalog confirmed that every root target delegates into
+`apps/mobile` and that `make check` does not start Metro or a native build.
+`make start` was also started successfully; Metro printed the local Expo Go
+URL and exited cleanly after Ctrl-C. `make build-web` exported the web bundle
+to the ignored `apps/mobile/dist/` directory.

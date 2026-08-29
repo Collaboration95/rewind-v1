@@ -7,9 +7,7 @@ import { test } from 'node:test';
 const appRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
 test('Expo Router scaffold stays inside the mobile workspace', () => {
-  const packageManifest = JSON.parse(
-    readFileSync(join(appRoot, 'package.json'), 'utf8'),
-  );
+  const packageManifest = JSON.parse(readFileSync(join(appRoot, 'package.json'), 'utf8'));
   const expoConfig = JSON.parse(readFileSync(join(appRoot, 'app.json'), 'utf8'));
 
   assert.equal(packageManifest.main, 'expo-router/entry');
