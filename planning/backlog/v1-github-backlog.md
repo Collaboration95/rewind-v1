@@ -15,17 +15,17 @@ and agent handoffs.
 
 ## Epic hierarchy
 
-| Key | Epic outcome | Initial status |
-| --- | --- | --- |
-| [`v1-epic-foundation`](https://github.com/Collaboration95/rewind-v1/issues/1) | A repeatable Expo workspace and agent delivery rails. | Backlog |
-| [`v1-epic-domain`](https://github.com/Collaboration95/rewind-v1/issues/2) | Local data, policies, clock, and simulation behaviour are deterministic. | Backlog |
-| [`v1-epic-group`](https://github.com/Collaboration95/rewind-v1/issues/3) | Seeded profiles can safely act within one local private group. | Backlog |
-| [`v1-epic-capture`](https://github.com/Collaboration95/rewind-v1/issues/4) | A real device can capture, persist, lock, and manage a contribution. | Backlog |
-| [`v1-epic-reminders`](https://github.com/Collaboration95/rewind-v1/issues/5) | Local reminder preference, delivery, and fallback are observable. | Backlog |
-| [`v1-epic-chat`](https://github.com/Collaboration95/rewind-v1/issues/6) | Seeded group members can send/reply/react to persistent local chat. | Backlog |
-| [`v1-epic-archive`](https://github.com/Collaboration95/rewind-v1/issues/7) | A simulation can reveal, play, archive, and share a local capsule playlist. | Backlog |
-| [`v1-epic-quality`](https://github.com/Collaboration95/rewind-v1/issues/8) | Automated checks and device evidence prove the V1 definition of done. | Backlog |
-| [`m2-epic-cloud-transition`](https://github.com/Collaboration95/rewind-v1/issues/9) | Future cloud/adapter/Terraform work is visible but not prematurely started. | Blocked |
+| Key                                                                                 | Epic outcome                                                                | Initial status |
+| ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------- | -------------- |
+| [`v1-epic-foundation`](https://github.com/Collaboration95/rewind-v1/issues/1)       | A repeatable Expo workspace and agent delivery rails.                       | Backlog        |
+| [`v1-epic-domain`](https://github.com/Collaboration95/rewind-v1/issues/2)           | Local data, policies, clock, and simulation behaviour are deterministic.    | Backlog        |
+| [`v1-epic-group`](https://github.com/Collaboration95/rewind-v1/issues/3)            | Seeded profiles can safely act within one local private group.              | Backlog        |
+| [`v1-epic-capture`](https://github.com/Collaboration95/rewind-v1/issues/4)          | A real device can capture, persist, lock, and manage a contribution.        | Backlog        |
+| [`v1-epic-reminders`](https://github.com/Collaboration95/rewind-v1/issues/5)        | Local reminder preference, delivery, and fallback are observable.           | Backlog        |
+| [`v1-epic-chat`](https://github.com/Collaboration95/rewind-v1/issues/6)             | Seeded group members can send/reply/react to persistent local chat.         | Backlog        |
+| [`v1-epic-archive`](https://github.com/Collaboration95/rewind-v1/issues/7)          | A simulation can reveal, play, archive, and share a local capsule playlist. | Backlog        |
+| [`v1-epic-quality`](https://github.com/Collaboration95/rewind-v1/issues/8)          | Automated checks and device evidence prove the V1 definition of done.       | Backlog        |
+| [`m2-epic-cloud-transition`](https://github.com/Collaboration95/rewind-v1/issues/9) | Future cloud/adapter/Terraform work is visible but not prematurely started. | Blocked        |
 
 ## Dependency-ordered child issues
 
@@ -34,44 +34,61 @@ dependency-free ticket after reviewing its prerequisite evidence. This prevents
 the solo local agent from implementing speculative work against an unstable
 foundation.
 
-| Order | Key | Child issue | Area | Size | Risk | Depends on | Initial status |
-| ---: | --- | --- | --- | --- | --- | --- | --- |
-| 1 | `v1-foundation-001` | Scaffold the Expo mobile workspace under `apps/mobile` | Mobile | S | Medium | — | **Ready** |
-| 2 | `v1-foundation-002` | Add mobile quality rails and baseline GitHub Actions checks | DevEx | S | Low | 001 | Backlog |
-| 3 | `v1-foundation-003` | Add original visual tokens and four-tab route shell | Mobile | M | Low | 001, 002 | Backlog |
-| 4 | `v1-foundation-004` | Establish testing, accessibility, and evidence selector contract | Quality | S | Low | 001, 002 | Backlog |
-| 5 | `v1-domain-001` | Define framework-free local domain models and repository ports | Domain | M | Medium | 002 | Backlog |
-| 6 | `v1-domain-002` | Implement SQLite migrations, seed fixtures, and resettable local repository | Domain | M | Medium | 001, 001-domain | Backlog |
-| 7 | `v1-domain-003` | Implement contribution budget and lifecycle policy state machine | Domain | M | High | 001-domain | Backlog |
-| 8 | `v1-domain-004` | Add deterministic simulation clock and local capsule assembler | Domain | M | High | 001-domain, 003-domain | Backlog |
-| 9 | `v1-group-001` | Add local profile session switching and membership guard | Group | M | Medium | 002-domain, 003-foundation | Backlog |
-| 10 | `v1-group-002` | Build local group home, prompt, quota, and invite-preview states | Experience | M | Low | 001-group, 003-foundation, 003-domain | Backlog |
-| 11 | `v1-group-003` | Prove local group authorization boundaries with negative policy tests | Domain | S | Medium | 001-group, 003-domain | Backlog |
-| 12 | `v1-capture-001` | Add device capability ports and permission-state UI | Mobile | M | High | 003-foundation, 001-group | Backlog |
-| 13 | `v1-capture-002` | Record a capped vertical video and persist its local file | Mobile | L | High | 001-capture, 002-domain | Backlog |
-| 14 | `v1-capture-003` | Review, submit, process-simulate, and lock a contribution | Capture | L | High | 002-capture, 003-domain, 002-group | Backlog |
-| 15 | `v1-capture-004` | Implement original preset overlays and capture haptic feedback | Experience | M | Medium | 002-capture, 003-foundation | Backlog |
-| 16 | `v1-capture-005` | Handle deletion, failure, retry, and lock-safe UI paths | Capture | M | High | 003-capture, 004-domain | Backlog |
-| 17 | `v1-reminders-001` | Persist local reminder preferences and schedule a device notification | Mobile | M | Medium | 001-group, 002-domain | Backlog |
-| 18 | `v1-reminders-002` | Handle reminder tap/deep link and in-app notification fallback | Mobile | M | Medium | 001-reminders, 003-foundation | Backlog |
-| 19 | `v1-reminders-003` | Build local settings, permission recovery, and safe demo reset controls | Experience | M | Medium | 001-reminders, 002-reminders | Backlog |
-| 20 | `v1-chat-001` | Persist profile-aware local group text messages | Chat | M | Medium | 001-group, 002-domain, 003-foundation | Backlog |
-| 21 | `v1-chat-002` | Add reply threads and one reaction type to local chat | Chat | M | Low | 001-chat | Backlog |
-| 22 | `v1-chat-003` | Add chat access guards, empty/error states, and interaction evidence | Chat | S | Medium | 002-chat, 003-group, 004-foundation | Backlog |
-| 23 | `v1-archive-001` | Build developer simulation controls for cycle advance and reveal | Archive | M | High | 004-domain, 005-capture | Backlog |
-| 24 | `v1-archive-002` | Render revealed archive playlist and play local captured media | Mobile | L | High | 001-archive, 002-capture, 003-foundation | Backlog |
-| 25 | `v1-archive-003` | Share a revealed local item and protect unrevealed export | Mobile | M | High | 002-archive, 003-group | Backlog |
-| 26 | `v1-quality-001` | Complete deterministic domain-policy coverage and failure fixtures | Quality | M | High | 005-capture, 003-group, 004-domain | Backlog |
-| 27 | `v1-quality-002` | Automate the V1 smoke journey with Maestro and synthetic screenshots | Quality | L | High | 002-archive, 002-reminders, 002-chat, 004-foundation | Backlog |
-| 28 | `v1-quality-003` | Audit accessibility, reduced motion, and device-specific failure states | Quality | M | Medium | 005-capture, 003-reminders, 003-chat, 002-archive | Backlog |
-| 29 | `v1-quality-004` | Run V1 release rehearsal and publish evidence-oriented handoff | Quality | M | Medium | 001-quality, 002-quality, 003-quality | Backlog |
-| 30 | `m2-cloud-001` | Define local-to-cloud adapter and data-contract transition plan | Cloud | M | High | 004-quality | Blocked |
-| 31 | `m2-cloud-002` | Spike a modular-monolith backend and local integration boundary | Cloud | L | High | 001-cloud | Blocked |
-| 32 | `m2-cloud-003` | Design reviewed Terraform modules and safe state boundary | Infrastructure | L | High | 001-cloud, 002-cloud | Blocked |
+| Order | Key                 | Child issue                                                                 | Area           | Size | Risk   | Depends on                                           | Initial status |
+| ----: | ------------------- | --------------------------------------------------------------------------- | -------------- | ---- | ------ | ---------------------------------------------------- | -------------- |
+|     1 | `v1-foundation-001` | Scaffold the Expo mobile workspace under `apps/mobile`                      | Mobile         | S    | Medium | —                                                    | **Ready**      |
+|     2 | `v1-foundation-002` | Add mobile quality rails and baseline GitHub Actions checks                 | DevEx          | S    | Low    | 001                                                  | Backlog        |
+|     3 | `v1-foundation-003` | Add original visual tokens and four-tab route shell                         | Mobile         | M    | Low    | 001, 002                                             | Backlog        |
+|     4 | `v1-foundation-004` | Establish testing, accessibility, and evidence selector contract            | Quality        | S    | Low    | 001, 002                                             | Backlog        |
+|     5 | `v1-domain-001`     | Define framework-free local domain models and repository ports              | Domain         | M    | Medium | 002                                                  | Backlog        |
+|     6 | `v1-domain-002`     | Implement SQLite migrations, seed fixtures, and resettable local repository | Domain         | M    | Medium | 001, 001-domain                                      | Backlog        |
+|     7 | `v1-domain-003`     | Implement contribution budget and lifecycle policy state machine            | Domain         | M    | High   | 001-domain                                           | Backlog        |
+|     8 | `v1-domain-004`     | Add deterministic simulation clock and local capsule assembler              | Domain         | M    | High   | 001-domain, 003-domain                               | Backlog        |
+|     9 | `v1-group-001`      | Add local profile session switching and membership guard                    | Group          | M    | Medium | 002-domain, 003-foundation                           | Backlog        |
+|    10 | `v1-group-002`      | Build local group home, prompt, quota, and invite-preview states            | Experience     | M    | Low    | 001-group, 003-foundation, 003-domain                | Backlog        |
+|    11 | `v1-group-003`      | Prove local group authorization boundaries with negative policy tests       | Domain         | S    | Medium | 001-group, 003-domain                                | Backlog        |
+|    12 | `v1-capture-001`    | Add device capability ports and permission-state UI                         | Mobile         | M    | High   | 003-foundation, 001-group                            | Backlog        |
+|    13 | `v1-capture-002`    | Record a capped vertical video and persist its local file                   | Mobile         | L    | High   | 001-capture, 002-domain                              | Backlog        |
+|    14 | `v1-capture-003`    | Review, submit, process-simulate, and lock a contribution                   | Capture        | L    | High   | 002-capture, 003-domain, 002-group                   | Backlog        |
+|    15 | `v1-capture-004`    | Implement original preset overlays and capture haptic feedback              | Experience     | M    | Medium | 002-capture, 003-foundation                          | Backlog        |
+|    16 | `v1-capture-005`    | Handle deletion, failure, retry, and lock-safe UI paths                     | Capture        | M    | High   | 003-capture, 004-domain                              | Backlog        |
+|    17 | `v1-reminders-001`  | Persist local reminder preferences and schedule a device notification       | Mobile         | M    | Medium | 001-group, 002-domain                                | Backlog        |
+|    18 | `v1-reminders-002`  | Handle reminder tap/deep link and in-app notification fallback              | Mobile         | M    | Medium | 001-reminders, 003-foundation                        | Backlog        |
+|    19 | `v1-reminders-003`  | Build local settings, permission recovery, and safe demo reset controls     | Experience     | M    | Medium | 001-reminders, 002-reminders                         | Backlog        |
+|    20 | `v1-chat-001`       | Persist profile-aware local group text messages                             | Chat           | M    | Medium | 001-group, 002-domain, 003-foundation                | Backlog        |
+|    21 | `v1-chat-002`       | Add reply threads and one reaction type to local chat                       | Chat           | M    | Low    | 001-chat                                             | Backlog        |
+|    22 | `v1-chat-003`       | Add chat access guards, empty/error states, and interaction evidence        | Chat           | S    | Medium | 002-chat, 003-group, 004-foundation                  | Backlog        |
+|    23 | `v1-archive-001`    | Build developer simulation controls for cycle advance and reveal            | Archive        | M    | High   | 004-domain, 005-capture                              | Backlog        |
+|    24 | `v1-archive-002`    | Render revealed archive playlist and play local captured media              | Mobile         | L    | High   | 001-archive, 002-capture, 003-foundation             | Backlog        |
+|    25 | `v1-archive-003`    | Share a revealed local item and protect unrevealed export                   | Mobile         | M    | High   | 002-archive, 003-group                               | Backlog        |
+|    26 | `v1-quality-001`    | Complete deterministic domain-policy coverage and failure fixtures          | Quality        | M    | High   | 005-capture, 003-group, 004-domain                   | Backlog        |
+|    27 | `v1-quality-002`    | Automate the V1 smoke journey with Maestro and synthetic screenshots        | Quality        | L    | High   | 002-archive, 002-reminders, 002-chat, 004-foundation | Backlog        |
+|    28 | `v1-quality-003`    | Audit accessibility, reduced motion, and device-specific failure states     | Quality        | M    | Medium | 005-capture, 003-reminders, 003-chat, 002-archive    | Backlog        |
+|    29 | `v1-quality-004`    | Run V1 release rehearsal and publish evidence-oriented handoff              | Quality        | M    | Medium | 001-quality, 002-quality, 003-quality                | Backlog        |
+|    30 | `m2-cloud-001`      | Define local-to-cloud adapter and data-contract transition plan             | Cloud          | M    | High   | 004-quality                                          | Blocked        |
+|    31 | `m2-cloud-002`      | Spike a modular-monolith backend and local integration boundary             | Cloud          | L    | High   | 001-cloud                                            | Blocked        |
+|    32 | `m2-cloud-003`      | Design reviewed Terraform modules and safe state boundary                   | Infrastructure | L    | High   | 001-cloud, 002-cloud                                 | Blocked        |
 
 `001-domain` in the table is shorthand for `v1-domain-001`; the remote issue
 bodies spell out full stable keys and issue numbers so an agent does not need to
 infer this shorthand.
+
+## Media-contract amendment
+
+On 2026-08-30, [#45 — Define local photo contribution and vignette treatment
+contract](https://github.com/Collaboration95/rewind-v1/issues/45) was added as a
+decision gate before domain and media implementation. Its accepted contract is
+recorded in [`ADR-0003`](../decisions/ADR-0003-local-media-and-vignette-contract.md):
+photos and videos are local contributions, photos account for a fixed three
+display seconds, and vignettes are metadata-only original preview/frame
+overlays. The existing issue dependency links make #45 block #14, #16, #22,
+#24, and #46.
+
+[#46 — Capture a still image and persist its local
+file](https://github.com/Collaboration95/rewind-v1/issues/46) follows the domain,
+profile, and capability foundations and reuses the same contribution lifecycle
+and pre-reveal privacy gate. It is a camera-only still capture ticket; gallery
+import and image editing remain out of scope.
 
 ## Ticket body standard
 
