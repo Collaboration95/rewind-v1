@@ -22,3 +22,15 @@ Cleo, Dev, and Finn; the prompt `What deserves a frame this week?`; one
 collecting cycle; one locked three-second photo; one locked five-second video;
 one chat message; and a demo-cycle clock. It includes both media kinds so the
 approved local media contract stays visible at the domain boundary.
+
+## Contribution policy
+
+`src/policy/` contains pure commands for capture validation, processing and
+retry transitions, one-delete quota restoration, and lock-safe pre-reveal
+summaries. The policy accepts an injected normalized simulated-week key and
+audit-event ID; it does not calculate timezone/DST boundaries or perform device
+I/O. Rejections always include a user-safe reason and an audit event. Delete
+audits carry the normalized week key and can be rehydrated after relaunch. V1
+allows five contributions and 30 total seconds per member/cycle, fixed
+three-second photos, 1–15 second videos, one retry, and one delete per
+simulated week.
