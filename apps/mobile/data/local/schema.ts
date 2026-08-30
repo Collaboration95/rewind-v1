@@ -1,7 +1,7 @@
 import type { LocalSqliteDriver } from './local-sqlite';
 
 export const DATABASE_NAME = 'rewind-v1.db';
-export const LATEST_SCHEMA_VERSION = 1;
+export const LATEST_SCHEMA_VERSION = 2;
 
 export interface Migration {
   readonly version: number;
@@ -107,6 +107,21 @@ export const MIGRATIONS: readonly Migration[] = [
         CREATE INDEX IF NOT EXISTS idx_messages_group_created ON messages(group_id, created_at);
         CREATE INDEX IF NOT EXISTS idx_reactions_message ON reactions(message_id);
         CREATE INDEX IF NOT EXISTS idx_audit_subject_at ON audit_events(subject_id, at);
+      `,
+    ],
+  },
+  {
+    version: 2,
+    statements: [
+      `
+        CREATE TABLE IF NOT EXISTS local_session (
+          id INTEGER PRIMARY KEY CHECK (id = 1),
+          group_id TEXT NOT NULL REFERENCES groups(id) ON DELETE RESTRICT,
+          active_member_id TEXT NOT NULL,
+          FOREIGN KEY (group_id, active_member_id)
+            REFERENCES group_members(group_id, member_id)
+            ON DELETE RESTRICT
+        );
       `,
     ],
   },

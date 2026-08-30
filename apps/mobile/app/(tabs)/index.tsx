@@ -4,6 +4,7 @@ import { FrameCard } from '../../components/FrameCard';
 import { ScreenFrame } from '../../components/ScreenFrame';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { colors, spacing, typography } from '../../components/tokens';
+import { LocalProfileSwitcher } from '../../features/session/LocalProfileSwitcher';
 
 export default function HomeScreen() {
   return (
@@ -27,6 +28,8 @@ export default function HomeScreen() {
           Synthetic profiles live on this device. There is no sign-in or sync in V1.
         </Text>
       </FrameCard>
+
+      <LocalProfileSwitcher />
 
       <View style={styles.footerNote}>
         <Text style={styles.footerLabel}>THE FIRST FRAME</Text>

@@ -9,5 +9,6 @@ const config = getDefaultConfig(projectRoot);
 // that package outside the app bundle while explicitly making it resolvable by
 // Metro; no other workspace directory is made available to the client bundle.
 config.watchFolders = [domainRoot];
+config.resolver.assetExts = [...config.resolver.assetExts, 'wasm'];
 
 module.exports = config;

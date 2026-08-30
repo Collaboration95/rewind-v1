@@ -32,6 +32,16 @@ async function insertFixture(database: LocalSqliteDriver, fixture: DomainFixture
     );
   }
 
+  const defaultMemberId = fixture.group.memberIds[0];
+  if (!defaultMemberId) {
+    throw new Error('The local fixture must contain at least one group member');
+  }
+
+  await database.runAsync(
+    'INSERT OR IGNORE INTO local_session (id, group_id, active_member_id) VALUES (1, ?, ?)',
+    [fixture.group.id, defaultMemberId],
+  );
+
   await database.runAsync(
     'INSERT OR IGNORE INTO cycles (id, group_id, start_at, duration_seconds, status) VALUES (?, ?, ?, ?, ?)',
     [
@@ -133,6 +143,7 @@ export async function resetDatabaseToSeed(
       DELETE FROM messages;
       DELETE FROM contributions;
       DELETE FROM capsules;
+      DELETE FROM local_session;
       DELETE FROM reminder_preferences;
       DELETE FROM group_members;
       DELETE FROM cycles;

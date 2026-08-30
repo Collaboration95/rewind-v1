@@ -75,6 +75,11 @@ export interface ReminderRepositoryPort {
   save(preference: ReminderPreference): Promise<void>;
 }
 
+export interface SessionRepositoryPort {
+  getActiveMemberId(groupId: GroupId): Promise<MemberId | null>;
+  saveActiveMember(groupId: GroupId, memberId: MemberId): Promise<void>;
+}
+
 export interface AuditRepositoryPort {
   append(event: AuditEvent): Promise<void>;
   list(subjectId?: string): Promise<readonly AuditEvent[]>;
@@ -89,6 +94,7 @@ export interface DomainRepositoryPort {
   readonly reactions: ReactionRepositoryPort;
   readonly capsules: CapsuleRepositoryPort;
   readonly reminders: ReminderRepositoryPort;
+  readonly session: SessionRepositoryPort;
   readonly audit: AuditRepositoryPort;
 }
 

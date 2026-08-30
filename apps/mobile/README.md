@@ -90,6 +90,14 @@ domain ports; `resetToSeed()` clears local records and restores that fixture.
 Only domain metadata and local media URIs are stored. The schema has no cloud
 credentials, remote media locators, blobs, or network client.
 
+## Local profile session
+
+The Home route exposes five synthetic profiles for development and evidence
+flows. The selected profile is stored in the local `local_session` row and is
+restored when the app relaunches. This is a simulated actor selector for local
+commands and queries, not sign-in, authentication, or a security boundary;
+membership is checked by the domain policy before a selection is persisted.
+
 ## Selector and accessibility contract
 
 Selectors and accessibility labels are part of the testable UI contract, not
