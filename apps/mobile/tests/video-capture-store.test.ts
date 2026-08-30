@@ -7,6 +7,7 @@ import {
 } from '../../../packages/domain/src/fixtures';
 import type { AuditEvent, Contribution } from '../../../packages/domain/src/models';
 import type { LocalMediaFilePort } from '../platform/files/storage';
+import { createLocalPhotoCaptureStore } from '../features/capture/local-photo-capture-store';
 import {
   createLocalVideoCaptureStore,
   type LocalVideoCaptureRepository,
@@ -57,7 +58,7 @@ function createHarness(saveContribution?: (contribution: Contribution) => Promis
   return { auditEvents, files, repository, savedContributions, store };
 }
 
-describe('Local video capture persistence boundary', () => {
+describe('Local media capture persistence boundary', () => {
   it('validates policy, copies the cache file, and persists metadata with the durable URI', async () => {
     const { auditEvents, files, repository, savedContributions, store } = createHarness();
 
@@ -138,5 +139,37 @@ describe('Local video capture persistence boundary', () => {
     expect(files.remove).toHaveBeenCalledWith(
       'file:///documents/rewind-captures/contribution-video-test.mp4',
     );
+  });
+
+  it('uses the shared policy and durable copy boundary for a fixed three-second photo', async () => {
+    const { auditEvents, files, repository, savedContributions } = createHarness();
+    const store = createLocalPhotoCaptureStore({
+      files,
+      nextId: () => 'contribution-photo-test',
+      repository,
+    });
+
+    const outcome = await store.save({
+      capturedAt: '2026-08-30T10:30:00.000Z',
+      durationSeconds: 3,
+      sourceUri: 'file:///cache/synthetic-photo.png',
+      vignetteTreatment: 'ccd',
+    });
+
+    expect(outcome.accepted).toBe(true);
+    if (!outcome.accepted) {
+      return;
+    }
+    expect(files.copyFromCache).toHaveBeenCalledWith(
+      'file:///cache/synthetic-photo.png',
+      'contribution-photo-test.png',
+    );
+    expect(outcome.value.mediaKind).toBe('photo');
+    expect(outcome.value.durationSeconds).toBe(3);
+    expect(outcome.value.localUri).toBe(
+      'file:///documents/rewind-captures/contribution-photo-test.png',
+    );
+    expect(savedContributions).toEqual([outcome.value]);
+    expect(auditEvents[0]?.type).toBe('policy.capture.accepted');
   });
 });

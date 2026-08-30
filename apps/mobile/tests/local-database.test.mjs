@@ -116,8 +116,27 @@ test('migrations, seed, repository reads, relaunch, and reset use real SQLite', 
       assert.equal(Number(row?.count), expectedCount, `seed count for ${table}`);
     }
 
+    const acceptedLocalPhoto = {
+      capturedAt: '2026-08-30T10:30:00.000Z',
+      cycleId: 'cycle-rewind-demo',
+      deletedAt: null,
+      durationSeconds: 3,
+      id: 'contribution-relaunch-photo',
+      localUri: 'file:///documents/rewind-captures/contribution-relaunch-photo.jpg',
+      mediaKind: 'photo',
+      memberId: 'member-ava',
+      processingAttempt: 0,
+      state: 'captured',
+      vignetteTreatment: 'flash',
+    };
+    await repository.contributions.save(acceptedLocalPhoto);
+    assert.equal(
+      (await repository.contributions.get('contribution-relaunch-photo'))?.localUri,
+      acceptedLocalPhoto.localUri,
+    );
+
     await repository.cycles.save({ ...cycle, status: 'reveal_pending' });
-    assert.equal((await repository.contributions.listByCycle('cycle-rewind-demo')).length, 2);
+    assert.equal((await repository.contributions.listByCycle('cycle-rewind-demo')).length, 3);
     await repository.session.saveActiveMember('group-rewind-demo', 'member-ben');
 
     await repository.audit.append({
@@ -149,6 +168,10 @@ test('migrations, seed, repository reads, relaunch, and reset use real SQLite', 
     const relaunchedRepository = new SQLiteDomainRepository(driver);
     assert.equal((await relaunchedRepository.messages.listByGroup('group-rewind-demo')).length, 2);
     assert.equal((await relaunchedRepository.audit.list('group-rewind-demo')).length, 1);
+    assert.deepEqual(
+      await relaunchedRepository.contributions.get('contribution-relaunch-photo'),
+      acceptedLocalPhoto,
+    );
     assert.equal(
       (await relaunchedRepository.cycles.get('cycle-rewind-demo'))?.status,
       'reveal_pending',

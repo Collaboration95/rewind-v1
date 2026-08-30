@@ -12,51 +12,51 @@ import {
 } from './local-media-capture-store';
 import type { LocalMediaFilePort } from '../../platform/files/storage';
 
-export interface LocalVideoCaptureInput {
+export interface LocalPhotoCaptureInput {
   readonly capturedAt: IsoTimestamp;
   readonly durationSeconds: number;
   readonly sourceUri: string;
   readonly vignetteTreatment: VignetteTreatment;
 }
 
-export interface LocalVideoCaptureStore {
+export interface LocalPhotoCaptureStore {
   discard(sourceUri: string): Promise<void>;
-  save(input: LocalVideoCaptureInput): Promise<PolicyOutcome<Contribution>>;
+  save(input: LocalPhotoCaptureInput): Promise<PolicyOutcome<Contribution>>;
 }
 
-export type LocalVideoCaptureRepository = LocalMediaCaptureRepository;
+export type LocalPhotoCaptureRepository = LocalMediaCaptureRepository;
 
-export interface LocalVideoCaptureStoreOptions {
+export interface LocalPhotoCaptureStoreOptions {
   readonly files: LocalMediaFilePort;
   readonly nextId?: () => string;
-  readonly repository: LocalVideoCaptureRepository;
+  readonly repository: LocalPhotoCaptureRepository;
 }
 
-export function createLocalVideoCaptureStore({
+export function createLocalPhotoCaptureStore({
   files,
   nextId,
   repository,
-}: LocalVideoCaptureStoreOptions): LocalVideoCaptureStore {
+}: LocalPhotoCaptureStoreOptions): LocalPhotoCaptureStore {
   const store = createLocalMediaCaptureStore({
     files,
-    filePrefix: 'contribution-video',
-    mediaKind: 'video',
+    filePrefix: 'contribution-photo',
+    mediaKind: 'photo',
     nextId,
     repository,
   });
 
   return {
     discard: store.discard,
-    save: (input) => store.save({ ...input, mediaKind: 'video' }),
+    save: (input) => store.save({ ...input, mediaKind: 'photo' }),
   };
 }
 
-export async function createSqliteLocalVideoCaptureStore(
+export async function createSqliteLocalPhotoCaptureStore(
   providedFiles?: LocalMediaFilePort,
-): Promise<LocalVideoCaptureStore> {
-  const store = await createSqliteLocalMediaCaptureStore('video', providedFiles);
+): Promise<LocalPhotoCaptureStore> {
+  const store = await createSqliteLocalMediaCaptureStore('photo', providedFiles);
   return {
     discard: store.discard,
-    save: (input) => store.save({ ...input, mediaKind: 'video' }),
+    save: (input) => store.save({ ...input, mediaKind: 'photo' }),
   };
 }

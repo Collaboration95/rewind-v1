@@ -17,7 +17,7 @@ test('video capture keeps recording and file APIs behind platform ports', () => 
   const recordingAdapter = read('platform', 'camera', 'expo-camera-recording.tsx');
   const filePort = read('platform', 'files', 'storage.ts');
   const fileAdapter = read('platform', 'files', 'expo-file-storage.ts');
-  const store = read('features', 'capture', 'local-video-capture-store.ts');
+  const sharedStore = read('features', 'capture', 'local-media-capture-store.ts');
   const packageJson = JSON.parse(readFileSync(join(appRoot, 'package.json'), 'utf8'));
 
   assert.doesNotMatch(route, /from ['"]expo-camera['"]/);
@@ -33,10 +33,10 @@ test('video capture keeps recording and file APIs behind platform ports', () => 
   assert.match(fileAdapter, /overwrite: true/);
   assert.match(panel, /MAX_VIDEO_DURATION_SECONDS/);
   assert.match(panel, /maxDurationSeconds/);
-  assert.match(store, /validateCapture/);
-  assert.match(store, /localUri: null/);
-  assert.match(store, /files\.exists/);
-  assert.match(store, /repository\.contributions\.save/);
-  assert.match(store, /repository\.audit\.append/);
+  assert.match(sharedStore, /validateCapture/);
+  assert.match(sharedStore, /localUri: null/);
+  assert.match(sharedStore, /files\.exists/);
+  assert.match(sharedStore, /repository\.contributions\.save/);
+  assert.match(sharedStore, /repository\.audit\.append/);
   assert.ok(packageJson.dependencies['expo-file-system']);
 });
