@@ -17,6 +17,7 @@ import {
   listPreRevealContributionSummaries,
   retryProcessing,
   startProcessing,
+  validateContributionForSubmission,
   validateCapture,
 } from "../src/index.ts";
 
@@ -400,6 +401,52 @@ test("processing transitions are bounded, auditable, and idempotent", () => {
       contribution: captured,
     }),
     "not-failed",
+  );
+});
+
+test("submission re-checks the persisted local file and current quota", () => {
+  const candidate = baseContribution({
+    id: "contribution-submission",
+    localUri: "file:///synthetic/submission.mov",
+  });
+  const accepted = validateContributionForSubmission({
+    actorMemberId: candidate.memberId,
+    context: baseContext("audit-submission-valid"),
+    contribution: candidate,
+    cycle: seededCycle,
+    existingContributions: [candidate],
+    group: seededGroup,
+  });
+
+  assert.equal(accepted.accepted, true);
+  assert.equal(accepted.auditEvent.type, "policy.submission.validated");
+
+  assertRejected(
+    validateContributionForSubmission({
+      actorMemberId: candidate.memberId,
+      context: baseContext("audit-submission-over-budget"),
+      contribution: { ...candidate, durationSeconds: 4 },
+      cycle: seededCycle,
+      existingContributions: [
+        candidate,
+        baseContribution({ id: "submission-fifteen", durationSeconds: 15 }),
+        baseContribution({ id: "submission-twelve", durationSeconds: 12 }),
+      ],
+      group: seededGroup,
+    }),
+    "duration-budget-limit",
+  );
+
+  assertRejected(
+    validateContributionForSubmission({
+      actorMemberId: candidate.memberId,
+      context: baseContext("audit-submission-no-file"),
+      contribution: { ...candidate, localUri: null },
+      cycle: seededCycle,
+      existingContributions: [candidate],
+      group: seededGroup,
+    }),
+    "local-file-missing",
   );
 });
 

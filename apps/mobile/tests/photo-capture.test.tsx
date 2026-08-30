@@ -172,7 +172,9 @@ describe('Local photo capture', () => {
       vignetteTreatment: 'flash',
     });
     expect(
-      view.getByText('The photo was copied to local app storage. Submission arrives next.'),
+      view.getByText(
+        'The photo was copied to local app storage. Review the capture below to submit.',
+      ),
     ).toBeTruthy();
   });
 
