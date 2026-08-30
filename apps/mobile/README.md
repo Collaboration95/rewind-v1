@@ -72,9 +72,37 @@ the simulation console remain in their dependency-ordered tickets. Shared
 visual decisions are documented in the repository [`DESIGN.md`](../../DESIGN.md)
 and owned at runtime by `components/tokens.ts`.
 
-The scaffold includes dependency-free Node contract tests for its Router/config,
-tooling, and route/accessibility boundaries; the Jest and React Native Testing
-Library setup belongs to issue #13.
+The workspace has two complementary test lanes. The dependency-free Node
+contract tests cover Router/config, tooling, and route/accessibility boundaries;
+the Jest + React Native Testing Library lane renders components under the
+Expo-compatible `jest-expo` preset. `npm run test` runs both lanes once and
+never starts watch mode. Use `npm run test:contracts` or `npm run test:unit` to
+run one lane locally.
+
+## Selector and accessibility contract
+
+Selectors and accessibility labels are part of the testable UI contract, not
+implementation details:
+
+- Every interactive control has a stable lowercase kebab-case `testID` in the
+  form `<surface>-<purpose>` (for example, `tab-camera`). IDs are unique within
+  the screen, remain stable across copy/localization changes, and are used for
+  structural assertions or device automation.
+- Every interactive control has an `accessibilityRole` where React Native does
+  not infer the role and a concise `accessibilityLabel` that describes the
+  action or state. Prefer accessible queries by role and label in component
+  tests; use `testID` when the element has no user-facing name or when the
+  route/structure itself is the subject of the assertion.
+- Decorative glyphs and visual wrappers use `accessible={false}`. A composite
+  status or information card may expose one parent label, but must not create
+  duplicate nested announcements.
+- Route roots use `screen-<route>`; the four tab buttons use
+  `tab-<route>` and a visible `<Route> tab` accessibility label. New controls
+  follow the same naming pattern and are added to a rendered smoke test when
+  they become part of an acceptance flow.
+
+Do not use generated IDs, array indexes, visible text as a `testID`, or an
+accessibility label that only describes a color, icon, or visual treatment.
 
 Do not turn the repository root into an Expo application. Keep generated native
 folders, build output, local environment files, and credentials out of Git.
