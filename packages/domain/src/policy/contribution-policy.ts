@@ -66,6 +66,7 @@ export type PolicyRejectionCode =
   | "unsupported-vignette-treatment"
   | "photo-duration-must-be-three-seconds"
   | "video-duration-out-of-range"
+  | "local-file-missing"
   | "contribution-count-limit"
   | "duration-budget-limit"
   | "processing-state-invalid"
@@ -97,6 +98,15 @@ export type PolicyOutcome<T> = PolicyAccepted<T> | PolicyRejected;
 
 export interface ContributionTransitionInput {
   readonly contribution: Contribution;
+  readonly context: PolicyContext;
+}
+
+export interface ValidateSubmissionInput {
+  readonly contribution: Contribution;
+  readonly group: Group;
+  readonly cycle: Cycle;
+  readonly actorMemberId: MemberId;
+  readonly existingContributions: readonly Contribution[];
   readonly context: PolicyContext;
 }
 
@@ -314,6 +324,162 @@ export function validateCapture({
     },
     "capture.accepted",
   );
+}
+
+/**
+ * Re-check a persisted capture immediately before submission. Capture metadata
+ * is local and can outlive the state it was validated against, so submission
+ * must enforce actor, cycle, media, file, and quota rules again.
+ */
+export function validateContributionForSubmission({
+  contribution,
+  group,
+  cycle,
+  actorMemberId,
+  existingContributions,
+  context,
+}: ValidateSubmissionInput): PolicyOutcome<Contribution> {
+  if (!group.memberIds.includes(actorMemberId)) {
+    return reject(
+      context,
+      contribution.id,
+      "not-a-group-member",
+      "Only a member of this local group can submit a contribution.",
+    );
+  }
+
+  if (actorMemberId !== contribution.memberId) {
+    return reject(
+      context,
+      contribution.id,
+      "not-a-contributor",
+      "Only the contributor can submit this contribution.",
+    );
+  }
+
+  if (contribution.cycleId !== cycle.id || cycle.groupId !== group.id) {
+    return reject(
+      context,
+      contribution.id,
+      "cycle-mismatch",
+      "This contribution does not belong to the current group cycle.",
+    );
+  }
+
+  if (cycle.status !== "collecting") {
+    return reject(
+      context,
+      contribution.id,
+      "cycle-not-collecting",
+      "This cycle is not accepting new contributions.",
+    );
+  }
+
+  if (contribution.state !== "captured") {
+    return reject(
+      context,
+      contribution.id,
+      "processing-state-invalid",
+      "This contribution is not ready to submit.",
+    );
+  }
+
+  if (!isMediaKind(contribution.mediaKind)) {
+    return reject(
+      context,
+      contribution.id,
+      "unsupported-media-kind",
+      "Choose a photo or a short video.",
+    );
+  }
+
+  if (!isVignetteTreatment(contribution.vignetteTreatment)) {
+    return reject(
+      context,
+      contribution.id,
+      "unsupported-vignette-treatment",
+      "Choose one of the available original vignette treatments.",
+    );
+  }
+
+  if (
+    contribution.mediaKind === "photo" &&
+    contribution.durationSeconds !== PHOTO_DURATION_SECONDS
+  ) {
+    return reject(
+      context,
+      contribution.id,
+      "photo-duration-must-be-three-seconds",
+      "A photo uses a fixed three-second display duration.",
+    );
+  }
+
+  if (
+    contribution.mediaKind === "video" &&
+    (!Number.isFinite(contribution.durationSeconds) ||
+      contribution.durationSeconds < MIN_VIDEO_DURATION_SECONDS ||
+      contribution.durationSeconds > MAX_VIDEO_DURATION_SECONDS)
+  ) {
+    return reject(
+      context,
+      contribution.id,
+      "video-duration-out-of-range",
+      "Video duration must be between one and 15 seconds.",
+    );
+  }
+
+  if (
+    typeof contribution.localUri !== "string" ||
+    contribution.localUri.trim().length === 0
+  ) {
+    return reject(
+      context,
+      contribution.id,
+      "local-file-missing",
+      "A local file is required before this contribution can be submitted.",
+    );
+  }
+
+  if (contribution.processingAttempt !== 0) {
+    return reject(
+      context,
+      contribution.id,
+      "processing-attempt-invalid",
+      "This contribution already has a processing attempt.",
+    );
+  }
+
+  const priorContributions = existingContributions.filter(
+    ({ id }) => id !== contribution.id,
+  );
+  const budget = getContributionBudget(
+    priorContributions,
+    contribution.memberId,
+    contribution.cycleId,
+  );
+
+  if (budget.remainingCount === 0) {
+    return reject(
+      context,
+      contribution.id,
+      "contribution-count-limit",
+      "You have used all five contribution slots for this cycle.",
+    );
+  }
+
+  if (
+    budget.usedDurationSeconds + contribution.durationSeconds >
+    MAX_TOTAL_DURATION_SECONDS
+  ) {
+    return reject(
+      context,
+      contribution.id,
+      "duration-budget-limit",
+      "That contribution would exceed the 30-second cycle allowance.",
+    );
+  }
+
+  return accept(context, contribution.id, contribution, "submission.validated");
 }
 
 /** Start the first local processing attempt for a captured contribution. */

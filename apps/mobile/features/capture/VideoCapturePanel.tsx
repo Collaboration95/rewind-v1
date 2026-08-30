@@ -21,6 +21,7 @@ type PendingVideo = {
 
 type VideoCapturePanelProps = {
   dependencies?: VideoCaptureDependencies;
+  onContributionSaved?: () => void;
 };
 
 const captureError = 'The local video could not be saved. Record again.';
@@ -28,7 +29,10 @@ const recordingError = 'The camera could not start recording. Try again.';
 const previewError = 'The camera preview could not start. Try again.';
 const shortVideoError = 'Record for at least one second before saving.';
 
-export function VideoCapturePanel({ dependencies: providedDependencies }: VideoCapturePanelProps) {
+export function VideoCapturePanel({
+  dependencies: providedDependencies,
+  onContributionSaved,
+}: VideoCapturePanelProps) {
   const [dependencies, setDependencies] = useState<VideoCaptureDependencies | null>(
     providedDependencies ?? null,
   );
@@ -224,6 +228,7 @@ export function VideoCapturePanel({ dependencies: providedDependencies }: VideoC
       }
       setPendingVideo(null);
       setPhase('saved');
+      onContributionSaved?.();
     } catch {
       if (!mountedRef.current) {
         return;
@@ -231,7 +236,7 @@ export function VideoCapturePanel({ dependencies: providedDependencies }: VideoC
       setError(captureError);
       setPhase('error');
     }
-  }, [dependencies, pendingVideo, phase]);
+  }, [dependencies, onContributionSaved, pendingVideo, phase]);
 
   const flipCamera = useCallback(() => {
     if (phase === 'ready' && previewReady) {
@@ -366,7 +371,7 @@ export function VideoCapturePanel({ dependencies: providedDependencies }: VideoC
       )}
 
       <Text accessibilityRole="text" style={styles.disclosure}>
-        LOCAL FILE COPY · NO SUBMISSION OR REVEAL YET
+        LOCAL FILE COPY · REVIEW AND SUBMIT BELOW
       </Text>
     </View>
   );
@@ -408,7 +413,7 @@ function getStatusCopy(phase: VideoCapturePhase, previewReady: boolean): string 
     case 'review':
       return 'Save the captured video locally or discard it and record again.';
     case 'saved':
-      return 'The video was copied to local app storage. Submission arrives next.';
+      return 'The video was copied to local app storage. Review the capture below to submit.';
     case 'saving':
       return 'Copying the video from cache into local app storage.';
     case 'stopping':

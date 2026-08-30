@@ -19,13 +19,17 @@ type CameraFacing = 'back' | 'front';
 
 type PhotoCapturePanelProps = {
   dependencies?: PhotoCaptureDependencies;
+  onContributionSaved?: () => void;
 };
 
 const captureError = 'The local photo could not be saved. Try again.';
 const photoError = 'The camera could not capture a still. Try again.';
 const previewError = 'The camera preview could not start. Try again.';
 
-export function PhotoCapturePanel({ dependencies: providedDependencies }: PhotoCapturePanelProps) {
+export function PhotoCapturePanel({
+  dependencies: providedDependencies,
+  onContributionSaved,
+}: PhotoCapturePanelProps) {
   const [dependencies, setDependencies] = useState<PhotoCaptureDependencies | null>(
     providedDependencies ?? null,
   );
@@ -165,6 +169,7 @@ export function PhotoCapturePanel({ dependencies: providedDependencies }: PhotoC
       }
       setPendingPhoto(null);
       setPhase('saved');
+      onContributionSaved?.();
     } catch {
       if (!mountedRef.current) {
         return;
@@ -172,7 +177,7 @@ export function PhotoCapturePanel({ dependencies: providedDependencies }: PhotoC
       setError(captureError);
       setPhase('error');
     }
-  }, [dependencies, pendingPhoto, phase]);
+  }, [dependencies, onContributionSaved, pendingPhoto, phase]);
 
   const flipCamera = useCallback(() => {
     if (phase === 'ready' && previewReady) {
@@ -314,7 +319,7 @@ export function PhotoCapturePanel({ dependencies: providedDependencies }: PhotoC
       )}
 
       <Text accessibilityRole="text" style={styles.disclosure}>
-        LOCAL FILE COPY · NO SUBMISSION OR REVEAL YET
+        LOCAL FILE COPY · REVIEW AND SUBMIT BELOW
       </Text>
     </View>
   );
@@ -354,7 +359,7 @@ function getStatusCopy(phase: PhotoCapturePhase, previewReady: boolean): string 
     case 'review':
       return 'Save the captured photo locally or discard it and take another.';
     case 'saved':
-      return 'The photo was copied to local app storage. Submission arrives next.';
+      return 'The photo was copied to local app storage. Review the capture below to submit.';
     case 'saving':
       return 'Copying the photo from cache into local app storage.';
   }

@@ -67,8 +67,9 @@ runs without an emulator or secret.
 The current shell exposes four original Rewind route surfaces: Home, Camera,
 Chat, and Archive. It identifies the V1 local-only boundary and uses synthetic
 copy only. Camera now supports local still-photo and capped video capture;
-submission/reveal policy, chat, reminders, playback, and the simulation console
-remain in their dependency-ordered tickets. Shared
+review, local submission, deterministic processing simulation, and
+metadata-only locking; reveal, chat, reminders, playback, and the simulation
+console remain in their dependency-ordered tickets. Shared
 visual decisions are documented in the repository [`DESIGN.md`](../../DESIGN.md)
 and owned at runtime by `components/tokens.ts`.
 
@@ -117,7 +118,21 @@ mockable without a camera. `platform/camera/recording.ts`,
 `platform/camera/still.ts`, and `platform/files/storage.ts` keep camera capture
 and cache-to-document copying behind ports. Accepted photos and videos are
 copied into the app document directory under `rewind-captures/`; the capture
-panels do not expose submission or reveal actions.
+panels hand accepted metadata to the local review panel. Review can discard a
+captured contribution or submit it through the policy-backed processing and
+lock states. The normal pre-reveal UI never displays a media URI, thumbnail, or
+player.
+
+## Local contribution review
+
+`features/capture/local-contribution-review-store.ts` keeps review commands
+behind the domain policy and repository ports. Submission re-checks the active
+actor, collecting cycle, media duration, local-file marker, and current quota,
+then persists auditable `processing` and `locked` transitions. The UI shows a
+short deterministic Processing state before the contribution becomes locked
+until reveal. Discard removes the captured local file and metadata before
+submission. Both photo and video use the same review surface; only safe
+duration, media-kind, vignette, file-status, and lifecycle metadata are shown.
 
 `app.json` owns the native permission copy and enables
 `recordAudioAndroid` so the video path declares `RECORD_AUDIO`. A simulator can
