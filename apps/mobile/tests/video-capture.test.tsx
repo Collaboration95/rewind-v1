@@ -16,6 +16,7 @@ import type {
   CameraPreviewProps,
   CameraVideoCapture,
 } from '../platform/camera/recording';
+import type { HapticsPort } from '../platform/haptics/feedback';
 import type {
   LocalVideoCaptureInput,
   LocalVideoCaptureStore,
@@ -103,14 +104,19 @@ function createDependencies() {
     discard: jest.fn(async (_sourceUri: string) => undefined),
     save: jest.fn(async (_input: LocalVideoCaptureInput) => acceptedSave()),
   };
+  const haptics: HapticsPort = {
+    trigger: jest.fn(async () => undefined),
+  };
   const dependencies: VideoCaptureDependencies = {
     camera: { Preview } as CameraRecordingPort,
+    haptics,
     store,
   };
 
   return {
     controller,
     dependencies,
+    haptics,
     resolveRecording: (capture: CameraVideoCapture) => resolveRecording(capture),
     store,
   };
@@ -141,17 +147,39 @@ describe('Local video capture', () => {
     expect(view.getByRole('button', { name: 'Use back camera' })).toBeTruthy();
   });
 
-  it('stops, reviews, saves, and keeps the local URI out of visible UI', async () => {
-    const { controller, dependencies, resolveRecording, store } = createDependencies();
+  it('exposes every original treatment as a selectable preview state', async () => {
+    const { dependencies } = createDependencies();
     const view = await renderVideoScreen(dependencies);
 
     await waitFor(() => expect(view.getByTestId('video-record')).toBeTruthy());
+    for (const treatment of [
+      ['flash', 'FLASH'],
+      ['ccd', 'CCD'],
+      ['home-movie', 'HOME MOVIE'],
+      ['tape', 'TAPE'],
+    ] as const) {
+      await fireEvent.press(view.getByTestId(`vignette-option-${treatment[0]}`));
+      expect(view.getByTestId('vignette-selection')).toHaveTextContent(treatment[1]);
+      expect(view.getByTestId('vignette-overlay')).toBeTruthy();
+    }
+  });
+
+  it('stops, reviews, saves, and keeps the local URI out of visible UI', async () => {
+    const { controller, dependencies, haptics, resolveRecording, store } = createDependencies();
+    const view = await renderVideoScreen(dependencies);
+
+    await waitFor(() => expect(view.getByTestId('video-record')).toBeTruthy());
+    await fireEvent.press(view.getByTestId('vignette-option-tape'));
+    expect(view.getByTestId('vignette-selection')).toHaveTextContent('TAPE');
+    expect(view.getByTestId('vignette-overlay')).toBeTruthy();
     await fireEvent.press(view.getByTestId('video-record'));
     expect(controller.recordAsync).toHaveBeenCalledWith({ maxDurationSeconds: 15 });
+    expect(haptics.trigger).toHaveBeenCalledWith('record');
     expect(view.getByTestId('video-stop')).toBeTruthy();
 
     await fireEvent.press(view.getByTestId('video-stop'));
     expect(controller.stopRecording).toHaveBeenCalledTimes(1);
+    expect(haptics.trigger).toHaveBeenCalledWith('stop');
     await act(async () => {
       resolveRecording({ durationSeconds: 2, uri: 'file:///cache/synthetic-video.mov' });
       await Promise.resolve();
@@ -168,7 +196,7 @@ describe('Local video capture', () => {
       capturedAt: expect.any(String),
       durationSeconds: 2,
       sourceUri: 'file:///cache/synthetic-video.mov',
-      vignetteTreatment: 'flash',
+      vignetteTreatment: 'tape',
     });
     expect(
       view.getByText(

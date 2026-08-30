@@ -12,6 +12,7 @@ import type {
   LocalContributionReviewOutcome,
   LocalContributionReviewStore,
 } from '../features/capture/local-contribution-review-store';
+import type { HapticsPort } from '../platform/haptics/feedback';
 
 afterEach(() => {
   jest.useRealTimers();
@@ -88,7 +89,10 @@ describe('Contribution review and local lock flow', () => {
   it('shows metadata-only review, traverses processing, and reaches locked state', async () => {
     jest.useFakeTimers();
     const { store } = createStore();
-    const view = await render(<ContributionReviewPanel store={store} />);
+    const haptics: HapticsPort = {
+      trigger: jest.fn(async () => undefined),
+    };
+    const view = await render(<ContributionReviewPanel haptics={haptics} store={store} />);
 
     await waitFor(() => expect(view.getByTestId('review-submit')).toBeTruthy());
     expect(view.getByTestId('review-duration')).toHaveTextContent(/00:05 RECORDED/);
@@ -117,6 +121,7 @@ describe('Contribution review and local lock flow', () => {
     expect(view.queryByTestId('review-submit')).toBeNull();
     expect(view.queryByTestId('review-complete-processing')).toBeNull();
     expect(store.completeProcessing).toHaveBeenCalledWith('contribution-review-ui');
+    expect(haptics.trigger).toHaveBeenCalledWith('locked');
   });
 
   it('keeps an invalid submission visible with a safe rejection before lock', async () => {

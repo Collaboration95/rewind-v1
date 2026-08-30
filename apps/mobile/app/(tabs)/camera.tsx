@@ -1,5 +1,6 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { CameraCapabilityPort } from '../../platform/camera/permissions';
+import type { HapticsPort } from '../../platform/haptics/feedback';
 
 import { RoutePlaceholder } from '../../components/RoutePlaceholder';
 import { colors } from '../../components/tokens';
@@ -15,6 +16,7 @@ import type { LocalContributionReviewStore } from '../../features/capture/local-
 export type CameraScreenProps = {
   capabilities?: CameraCapabilityPort;
   captureDependencies?: VideoCaptureDependencies;
+  haptics?: HapticsPort;
   mediaKind?: CameraMediaKind;
   photoCaptureDependencies?: PhotoCaptureDependencies;
   reviewStore?: LocalContributionReviewStore;
@@ -25,12 +27,14 @@ export type CameraScreenProps = {
 export default function CameraScreen({
   capabilities,
   captureDependencies,
+  haptics: providedHaptics,
   mediaKind = 'video',
   photoCaptureDependencies,
   reviewStore,
   showCapture = true,
   showMediaKindPicker = true,
 }: CameraScreenProps = {}) {
+  const [localHaptics, setLocalHaptics] = useState<HapticsPort | null>(null);
   const [reviewRefreshToken, setReviewRefreshToken] = useState(0);
   const handleContributionSaved = useCallback(() => {
     setReviewRefreshToken((current) => current + 1);
@@ -39,6 +43,29 @@ export default function CameraScreen({
     showCapture &&
     (reviewStore !== undefined ||
       (captureDependencies === undefined && photoCaptureDependencies === undefined));
+
+  useEffect(() => {
+    if (providedHaptics) {
+      return;
+    }
+
+    let cancelled = false;
+    void import('../../platform/haptics/expo-haptics')
+      .then(({ createExpoHapticsPort }) => {
+        if (!cancelled) {
+          setLocalHaptics(createExpoHapticsPort());
+        }
+      })
+      .catch(() => {
+        // Haptics are optional and must not block camera or review flows.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [providedHaptics]);
+
+  const haptics = providedHaptics ?? localHaptics ?? undefined;
 
   return (
     <RoutePlaceholder
@@ -61,11 +88,13 @@ export default function CameraScreen({
                 selectedMediaKind === 'video' ? (
                   <VideoCapturePanel
                     dependencies={captureDependencies}
+                    haptics={haptics}
                     onContributionSaved={handleContributionSaved}
                   />
                 ) : (
                   <PhotoCapturePanel
                     dependencies={photoCaptureDependencies}
+                    haptics={haptics}
                     onContributionSaved={handleContributionSaved}
                   />
                 )
@@ -74,7 +103,11 @@ export default function CameraScreen({
         showMediaKindPicker={showMediaKindPicker}
       />
       {reviewEnabled ? (
-        <ContributionReviewPanel refreshToken={reviewRefreshToken} store={reviewStore} />
+        <ContributionReviewPanel
+          haptics={haptics}
+          refreshToken={reviewRefreshToken}
+          store={reviewStore}
+        />
       ) : null}
     </RoutePlaceholder>
   );
