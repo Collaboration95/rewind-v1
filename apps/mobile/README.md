@@ -12,6 +12,8 @@ Expo SDK `57.0.18`,
 React Native `0.86.3`, React `19.2.3`, and an npm lockfile. The current template
 is configured here with a top-level `app/` route directory, so the initial route
 is `app/index.tsx` and the root Router configuration is `app/_layout.tsx`.
+The root route keeps a compatibility redirect while the four-tab shell and its
+route placeholders live under `app/(tabs)/`.
 
 The template selection is reproducible in an empty directory with
 `npx create-expo-app@4.0.0 <directory> --template
@@ -61,14 +63,18 @@ The tested local runtime is pinned in `.nvmrc` at Node `26.3.1`. The checked
 workflow uses the same version, installs with the committed npm lockfile, and
 runs without an emulator or secret.
 
-## Scope of this ticket
+## Current route-shell scope
 
-The first route is an original, static Rewind landing state: it identifies the
-V1 local-only boundary and uses synthetic copy only. Camera capture, persistence,
-tabs, chat, reminders, playback, and the simulation console are intentionally
-left for their dependency-ordered tickets. The scaffold includes dependency-free
-Node contract tests for its Router/config and tooling boundaries; the Jest and
-React Native Testing Library setup belongs to issue #13.
+The current shell exposes four original, static Rewind states: Home, Camera,
+Chat, and Archive. It identifies the V1 local-only boundary and uses synthetic
+copy only. Camera capture, persistence, chat policy, reminders, playback, and
+the simulation console remain in their dependency-ordered tickets. Shared
+visual decisions are documented in the repository [`DESIGN.md`](../../DESIGN.md)
+and owned at runtime by `components/tokens.ts`.
+
+The scaffold includes dependency-free Node contract tests for its Router/config,
+tooling, and route/accessibility boundaries; the Jest and React Native Testing
+Library setup belongs to issue #13.
 
 Do not turn the repository root into an Expo application. Keep generated native
 folders, build output, local environment files, and credentials out of Git.
