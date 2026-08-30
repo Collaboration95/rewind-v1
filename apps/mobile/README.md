@@ -73,13 +73,22 @@ visual decisions are documented in the repository [`DESIGN.md`](../../DESIGN.md)
 and owned at runtime by `components/tokens.ts`.
 
 The workspace has two complementary test lanes. The dependency-free Node
-contract tests cover Router/config, tooling, and route/accessibility boundaries;
-the Jest + React Native Testing Library lane renders components under the
-Expo-compatible `jest-expo` preset. The framework-free `packages/domain/`
-package also runs a direct Node fixture and dependency-boundary test. `npm run
-test` runs all three lanes once and never starts watch mode. Use
-`npm run test:contracts`, `npm run test:domain`, or `npm run test:unit` to run
-one lane locally.
+contract tests cover Router/config, tooling, route/accessibility boundaries, and
+the real SQLite migration/seed/repository path; the Jest + React Native Testing
+Library lane renders components under the Expo-compatible `jest-expo` preset.
+The framework-free `packages/domain/` package also runs a direct Node fixture
+and dependency-boundary test. `npm run test` runs all three lanes once and
+never starts watch mode. Use `npm run test:contracts`, `npm run test:database`,
+`npm run test:domain`, or `npm run test:unit` to run one lane locally.
+
+## Local SQLite repository
+
+`data/local/` owns the device-local SQLite adapter. `openLocalDatabase()` opens
+`rewind-v1.db`, applies versioned migrations, and idempotently inserts the
+synthetic domain fixture. The returned repository implements the framework-free
+domain ports; `resetToSeed()` clears local records and restores that fixture.
+Only domain metadata and local media URIs are stored. The schema has no cloud
+credentials, remote media locators, blobs, or network client.
 
 ## Selector and accessibility contract
 
