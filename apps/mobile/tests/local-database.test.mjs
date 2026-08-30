@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { test } from 'node:test';
 
 import { SQLiteDomainRepository } from '../data/local/repository.ts';
-import { migrateDatabase } from '../data/local/schema.ts';
+import { LATEST_SCHEMA_VERSION, migrateDatabase } from '../data/local/schema.ts';
 import { resetDatabaseToSeed, seedDatabase } from '../data/local/seed.ts';
 
 class NodeSqliteDriver {
@@ -59,7 +59,10 @@ test('migrations, seed, repository reads, relaunch, and reset use real SQLite', 
     await migrateDatabase(driver);
     await seedDatabase(driver);
 
-    assert.equal(Number((await driver.getFirstAsync('PRAGMA user_version'))?.user_version), 1);
+    assert.equal(
+      Number((await driver.getFirstAsync('PRAGMA user_version'))?.user_version),
+      LATEST_SCHEMA_VERSION,
+    );
     assert.equal(Number((await driver.getFirstAsync('PRAGMA foreign_keys'))?.foreign_keys), 1);
 
     const repository = new SQLiteDomainRepository(driver);
@@ -74,6 +77,7 @@ test('migrations, seed, repository reads, relaunch, and reset use real SQLite', 
     const messages = await repository.messages.listByGroup('group-rewind-demo');
     const capsule = await repository.capsules.getByCycle('cycle-rewind-demo');
     const reminder = await repository.reminders.get('member-ava');
+    const activeMemberId = await repository.session.getActiveMemberId('group-rewind-demo');
 
     assert.equal(group?.name, 'The Sunday Room');
     assert.equal(members.length, 5);
@@ -93,6 +97,7 @@ test('migrations, seed, repository reads, relaunch, and reset use real SQLite', 
       'contribution-video-demo',
     ]);
     assert.equal(reminder?.enabled, false);
+    assert.equal(activeMemberId, 'member-ava');
 
     for (const [table, expectedCount] of [
       ['members', 5],
@@ -104,6 +109,7 @@ test('migrations, seed, repository reads, relaunch, and reset use real SQLite', 
       ['capsules', 1],
       ['reminder_preferences', 1],
       ['simulation_clock', 1],
+      ['local_session', 1],
       ['audit_events', 0],
     ]) {
       const row = await driver.getFirstAsync(`SELECT COUNT(*) AS count FROM ${table}`);
@@ -112,6 +118,7 @@ test('migrations, seed, repository reads, relaunch, and reset use real SQLite', 
 
     await repository.cycles.save({ ...cycle, status: 'reveal_pending' });
     assert.equal((await repository.contributions.listByCycle('cycle-rewind-demo')).length, 2);
+    await repository.session.saveActiveMember('group-rewind-demo', 'member-ben');
 
     await repository.audit.append({
       id: 'audit-local-edit',
@@ -146,6 +153,10 @@ test('migrations, seed, repository reads, relaunch, and reset use real SQLite', 
       (await relaunchedRepository.cycles.get('cycle-rewind-demo'))?.status,
       'reveal_pending',
     );
+    assert.equal(
+      await relaunchedRepository.session.getActiveMemberId('group-rewind-demo'),
+      'member-ben',
+    );
 
     await resetDatabaseToSeed(driver);
     assert.equal((await relaunchedRepository.messages.listByGroup('group-rewind-demo')).length, 1);
@@ -154,6 +165,10 @@ test('migrations, seed, repository reads, relaunch, and reset use real SQLite', 
     assert.equal(
       (await relaunchedRepository.cycles.get('cycle-rewind-demo'))?.status,
       'collecting',
+    );
+    assert.equal(
+      await relaunchedRepository.session.getActiveMemberId('group-rewind-demo'),
+      'member-ava',
     );
   } finally {
     driver.close();

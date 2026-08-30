@@ -36,7 +36,7 @@ test('mobile quality scripts are deterministic and non-watch', () => {
   );
   assert.equal(
     scripts['test:domain'],
-    'node --experimental-strip-types --test ../../packages/domain/tests/domain.test.mjs ../../packages/domain/tests/boundary.test.mjs ../../packages/domain/tests/policy.test.mjs ../../packages/domain/tests/simulation.test.mjs',
+    'node --experimental-strip-types --test ../../packages/domain/tests/domain.test.mjs ../../packages/domain/tests/boundary.test.mjs ../../packages/domain/tests/policy.test.mjs ../../packages/domain/tests/simulation.test.mjs ../../packages/domain/tests/session.test.mjs',
   );
   assert.equal(scripts['test:unit'], 'jest --runInBand');
 
@@ -46,7 +46,7 @@ test('mobile quality scripts are deterministic and non-watch', () => {
   );
   assert.equal(
     domainManifest.scripts.test,
-    'node --experimental-strip-types --test tests/domain.test.mjs tests/boundary.test.mjs tests/policy.test.mjs tests/simulation.test.mjs',
+    'node --experimental-strip-types --test tests/domain.test.mjs tests/boundary.test.mjs tests/policy.test.mjs tests/simulation.test.mjs tests/session.test.mjs',
   );
 
   assert.match(jestConfig, /preset: 'jest-expo'/);
@@ -54,6 +54,7 @@ test('mobile quality scripts are deterministic and non-watch', () => {
   assert.match(jestConfig, /tests\/\*\*\/\*\.test\.tsx/);
   assert.match(metroConfig, /packages\/domain/);
   assert.match(metroConfig, /watchFolders/);
+  assert.match(metroConfig, /assetExts.*wasm/);
   assert.match(scripts.check, /format:check/);
   assert.match(scripts.check, /lint/);
   assert.match(scripts.check, /typecheck/);

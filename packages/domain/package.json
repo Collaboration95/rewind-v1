@@ -8,6 +8,6 @@
   },
   "scripts": {
     "typecheck": "../../apps/mobile/node_modules/.bin/tsc --noEmit -p tsconfig.json",
-    "test": "node --experimental-strip-types --test tests/domain.test.mjs tests/boundary.test.mjs tests/policy.test.mjs tests/simulation.test.mjs"
+    "test": "node --experimental-strip-types --test tests/domain.test.mjs tests/boundary.test.mjs tests/policy.test.mjs tests/simulation.test.mjs tests/session.test.mjs"
   }
 }

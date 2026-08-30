@@ -4,7 +4,9 @@ import type {
   Contribution,
   Cycle,
   Group,
+  GroupId,
   Member,
+  MemberId,
   Message,
   Reaction,
   ReminderPreference,
@@ -20,6 +22,7 @@ import type {
   MessageRepositoryPort,
   ReactionRepositoryPort,
   ReminderRepositoryPort,
+  SessionRepositoryPort,
 } from '../../../../packages/domain/src/ports';
 
 import type { LocalSqliteDriver } from './local-sqlite';
@@ -94,6 +97,8 @@ type ReminderRow = {
   weekday: number;
 };
 
+type SessionRow = { active_member_id: string };
+
 type AuditRow = {
   at: string;
   id: string;
@@ -114,6 +119,7 @@ export class SQLiteDomainRepository implements DomainRepositoryPort {
   public readonly messages: MessageRepositoryPort;
   public readonly reactions: ReactionRepositoryPort;
   public readonly reminders: ReminderRepositoryPort;
+  public readonly session: SessionRepositoryPort;
 
   public constructor(database: LocalSqliteDriver) {
     this.database = database;
@@ -153,6 +159,10 @@ export class SQLiteDomainRepository implements DomainRepositoryPort {
     this.reminders = {
       get: (memberId) => this.getReminder(memberId),
       save: (preference) => this.saveReminder(preference),
+    };
+    this.session = {
+      getActiveMemberId: (groupId) => this.getActiveMemberId(groupId),
+      saveActiveMember: (groupId, memberId) => this.saveActiveMember(groupId, memberId),
     };
     this.audit = {
       append: (event) => this.appendAuditEvent(event),
@@ -425,6 +435,25 @@ export class SQLiteDomainRepository implements DomainRepositoryPort {
         preference.minute,
         preference.notificationId,
       ],
+    );
+  }
+
+  private async getActiveMemberId(groupId: GroupId): Promise<MemberId | null> {
+    const row = await this.database.getFirstAsync<SessionRow>(
+      'SELECT active_member_id FROM local_session WHERE id = 1 AND group_id = ?',
+      [groupId],
+    );
+    return row?.active_member_id ?? null;
+  }
+
+  private async saveActiveMember(groupId: GroupId, memberId: MemberId): Promise<void> {
+    await this.database.runAsync(
+      `INSERT INTO local_session (id, group_id, active_member_id)
+       VALUES (1, ?, ?)
+       ON CONFLICT(id) DO UPDATE SET
+         group_id = excluded.group_id,
+         active_member_id = excluded.active_member_id`,
+      [groupId, memberId],
     );
   }
 
