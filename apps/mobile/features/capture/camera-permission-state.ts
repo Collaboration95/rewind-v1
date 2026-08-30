@@ -119,7 +119,7 @@ export function useCameraPermissionState(
         capabilitiesRef.current = capabilities;
         const [camera, microphone] = await Promise.all([
           capabilities.camera.check(),
-          capabilities.microphone.check(),
+          mediaKind === 'video' ? capabilities.microphone.check() : Promise.resolve(null),
         ]);
         return { camera, microphone };
       })
@@ -141,7 +141,7 @@ export function useCameraPermissionState(
     return () => {
       cancelled = true;
     };
-  }, [providedCapabilities, retryToken]);
+  }, [mediaKind, providedCapabilities, retryToken]);
 
   const assessment = useMemo(
     () => assessPermissions(mediaKind, snapshots, error),

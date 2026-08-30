@@ -66,8 +66,9 @@ runs without an emulator or secret.
 
 The current shell exposes four original Rewind route surfaces: Home, Camera,
 Chat, and Archive. It identifies the V1 local-only boundary and uses synthetic
-copy only. Still capture, submission/reveal policy, chat, reminders, playback,
-and the simulation console remain in their dependency-ordered tickets. Shared
+copy only. Camera now supports local still-photo and capped video capture;
+submission/reveal policy, chat, reminders, playback, and the simulation console
+remain in their dependency-ordered tickets. Shared
 visual decisions are documented in the repository [`DESIGN.md`](../../DESIGN.md)
 and owned at runtime by `components/tokens.ts`.
 
@@ -104,11 +105,11 @@ ports plus the device-settings action. The Expo adapter is the only layer that
 imports `expo-camera` or native settings APIs; the Camera route consumes the
 port through a permission preflight component. Its loading, grant, ready,
 denied/retry, blocked/settings, unsupported, and failed-check states are
-mockable without a camera. `platform/camera/recording.ts` and
-`platform/files/storage.ts` keep video recording and cache-to-document copying
-behind ports. Accepted videos are copied into the app document directory under
-`rewind-captures/`; the capture panel does not expose submission or reveal
-actions.
+mockable without a camera. `platform/camera/recording.ts`,
+`platform/camera/still.ts`, and `platform/files/storage.ts` keep camera capture
+and cache-to-document copying behind ports. Accepted photos and videos are
+copied into the app document directory under `rewind-captures/`; the capture
+panels do not expose submission or reveal actions.
 
 `app.json` owns the native permission copy and enables
 `recordAudioAndroid` so the video path declares `RECORD_AUDIO`. A simulator can

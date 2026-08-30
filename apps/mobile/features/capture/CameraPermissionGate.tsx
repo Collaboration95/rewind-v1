@@ -198,8 +198,8 @@ export function CameraPermissionGate({
       </View>
 
       <Text accessibilityRole="text" style={styles.disclosure}>
-        {mediaKind === 'video' && renderReady
-          ? 'LOCAL PERMISSION CHECK · RECORDING STAYS ON DEVICE'
+        {renderReady
+          ? `LOCAL PERMISSION CHECK · ${mediaKind === 'video' ? 'RECORDING' : 'CAPTURE'} STAYS ON DEVICE`
           : 'LOCAL PERMISSION CHECK · NO RECORDING IN THIS SLICE'}
       </Text>
     </FrameCard>
