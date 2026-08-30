@@ -22,9 +22,8 @@ trims the generated starter to the single local landing route.
 
 The checked local baseline on 2026-08-29 is Node `26.3.1`, npm `11.16.0`, and
 Xcode `26.6` with an iOS 17.5 simulator. Expo Go is the scaffold verification
-path; a local development build remains the intended path once native device
-capabilities are added. CocoaPods and Android tooling are not required by this
-initial screen and are not claimed as verified here.
+path; a local development build remains the intended path for native camera
+capture. CocoaPods and Android tooling are not claimed as verified here.
 
 ## Install, hot reload, and build
 
@@ -65,10 +64,10 @@ runs without an emulator or secret.
 
 ## Current route-shell scope
 
-The current shell exposes four original, static Rewind states: Home, Camera,
+The current shell exposes four original Rewind route surfaces: Home, Camera,
 Chat, and Archive. It identifies the V1 local-only boundary and uses synthetic
-copy only. Camera capture, persistence, chat policy, reminders, playback, and
-the simulation console remain in their dependency-ordered tickets. Shared
+copy only. Still capture, submission/reveal policy, chat, reminders, playback,
+and the simulation console remain in their dependency-ordered tickets. Shared
 visual decisions are documented in the repository [`DESIGN.md`](../../DESIGN.md)
 and owned at runtime by `components/tokens.ts`.
 
@@ -105,12 +104,16 @@ ports plus the device-settings action. The Expo adapter is the only layer that
 imports `expo-camera` or native settings APIs; the Camera route consumes the
 port through a permission preflight component. Its loading, grant, ready,
 denied/retry, blocked/settings, unsupported, and failed-check states are
-mockable without a camera and do not render recording controls in this slice.
+mockable without a camera. `platform/camera/recording.ts` and
+`platform/files/storage.ts` keep video recording and cache-to-document copying
+behind ports. Accepted videos are copied into the app document directory under
+`rewind-captures/`; the capture panel does not expose submission or reveal
+actions.
 
 `app.json` owns the native permission copy and enables
-`recordAudioAndroid` so the later video path declares `RECORD_AUDIO`. A
-simulator can verify layout and mocked states, but it does not prove physical
-camera or microphone capture.
+`recordAudioAndroid` so the video path declares `RECORD_AUDIO`. A simulator can
+verify layout and mocked states, but it does not prove physical camera or
+microphone capture.
 
 ## Selector and accessibility contract
 
