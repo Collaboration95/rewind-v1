@@ -1,7 +1,14 @@
+import type { CameraCapabilityPort } from '../../platform/camera/permissions';
+
 import { RoutePlaceholder } from '../../components/RoutePlaceholder';
 import { colors } from '../../components/tokens';
+import { CameraPermissionGate } from '../../features/capture/CameraPermissionGate';
 
-export default function CameraScreen() {
+export type CameraScreenProps = {
+  capabilities?: CameraCapabilityPort;
+};
+
+export default function CameraScreen({ capabilities }: CameraScreenProps = {}) {
   return (
     <RoutePlaceholder
       accent={colors.flash}
@@ -13,6 +20,8 @@ export default function CameraScreen() {
       screenTestID="screen-camera"
       title={'Make a\nframe.'}
       titleTestID="camera-title"
-    />
+    >
+      <CameraPermissionGate capabilities={capabilities} />
+    </RoutePlaceholder>
   );
 }

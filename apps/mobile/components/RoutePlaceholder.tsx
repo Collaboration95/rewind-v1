@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { ColorValue } from 'react-native';
 import { StyleSheet, Text, View } from 'react-native';
 
@@ -13,6 +14,7 @@ type RoutePlaceholderProps = {
   cardBody: string;
   cardKicker: string;
   cardTestID: string;
+  children?: ReactNode;
   description: string;
   glyph: TabGlyphName;
   screenTestID: string;
@@ -25,6 +27,7 @@ export function RoutePlaceholder({
   cardBody,
   cardKicker,
   cardTestID,
+  children,
   description,
   glyph,
   screenTestID,
@@ -48,14 +51,16 @@ export function RoutePlaceholder({
         <Text style={styles.description}>{description}</Text>
       </View>
 
-      <FrameCard
-        accessibilityLabel={`${cardKicker}. ${cardBody}`}
-        accent={accent}
-        testID={cardTestID}
-      >
-        <Text style={[styles.cardKicker, { color: accent }]}>{cardKicker}</Text>
-        <Text style={styles.cardBody}>{cardBody}</Text>
-      </FrameCard>
+      {children ?? (
+        <FrameCard
+          accessibilityLabel={`${cardKicker}. ${cardBody}`}
+          accent={accent}
+          testID={cardTestID}
+        >
+          <Text style={[styles.cardKicker, { color: accent }]}>{cardKicker}</Text>
+          <Text style={styles.cardBody}>{cardBody}</Text>
+        </FrameCard>
+      )}
 
       <View style={styles.footerNote}>
         <Text style={styles.footerLabel}>LOCAL DEMO ONLY</Text>

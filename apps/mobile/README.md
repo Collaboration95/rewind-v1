@@ -98,6 +98,20 @@ restored when the app relaunches. This is a simulated actor selector for local
 commands and queries, not sign-in, authentication, or a security boundary;
 membership is checked by the domain policy before a selection is persisted.
 
+## Camera capability boundary
+
+`platform/camera/permissions.ts` defines the camera and microphone permission
+ports plus the device-settings action. The Expo adapter is the only layer that
+imports `expo-camera` or native settings APIs; the Camera route consumes the
+port through a permission preflight component. Its loading, grant, ready,
+denied/retry, blocked/settings, unsupported, and failed-check states are
+mockable without a camera and do not render recording controls in this slice.
+
+`app.json` owns the native permission copy and enables
+`recordAudioAndroid` so the later video path declares `RECORD_AUDIO`. A
+simulator can verify layout and mocked states, but it does not prove physical
+camera or microphone capture.
+
 ## Selector and accessibility contract
 
 Selectors and accessibility labels are part of the testable UI contract, not
