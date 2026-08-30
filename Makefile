@@ -48,7 +48,7 @@ format-check: ## Check mobile formatting without changing files
 typecheck: ## Run the TypeScript compiler without emitting files
 	$(NPM) --prefix $(MOBILE_DIR) run typecheck
 
-test: ## Run the dependency-free mobile contract tests once
+test: ## Run mobile contract and component tests once
 	$(NPM) --prefix $(MOBILE_DIR) run test
 
 workflow-check: ## Parse the GitHub Actions workflow with Ruby's standard YAML parser
