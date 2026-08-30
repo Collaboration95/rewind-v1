@@ -16,6 +16,7 @@ import type {
   CameraPhotoCapturePort,
   CameraPhotoPreviewProps,
 } from '../platform/camera/still';
+import type { HapticsPort } from '../platform/haptics/feedback';
 import type {
   LocalPhotoCaptureInput,
   LocalPhotoCaptureStore,
@@ -101,14 +102,19 @@ function createDependencies() {
     discard: jest.fn(async (_sourceUri: string) => undefined),
     save: jest.fn(async (_input: LocalPhotoCaptureInput) => acceptedSave()),
   };
+  const haptics: HapticsPort = {
+    trigger: jest.fn(async () => undefined),
+  };
   const dependencies: PhotoCaptureDependencies = {
     camera: { Preview } as CameraPhotoCapturePort,
+    haptics,
     store,
   };
 
   return {
     controller,
     dependencies,
+    haptics,
     resolvePhoto: (capture: CameraPhotoCapture) => resolvePhoto(capture),
     store,
   };
@@ -144,18 +150,23 @@ describe('Local photo capture', () => {
 
   it('captures, reviews, saves, and keeps the local URI out of visible UI', async () => {
     const { capabilities } = createCapabilities();
-    const { controller, dependencies, resolvePhoto, store } = createDependencies();
+    const { controller, dependencies, haptics, resolvePhoto, store } = createDependencies();
     const view = await renderPhotoScreen(dependencies, capabilities);
 
     await waitFor(() => expect(view.getByTestId('photo-capture')).toBeTruthy());
+    await fireEvent.press(view.getByTestId('vignette-option-ccd'));
+    expect(view.getByTestId('vignette-selection')).toHaveTextContent('CCD');
+    expect(view.getByTestId('vignette-overlay')).toBeTruthy();
     await fireEvent.press(view.getByTestId('photo-capture'));
     expect(controller.takePictureAsync).toHaveBeenCalledTimes(1);
+    expect(haptics.trigger).toHaveBeenCalledWith('record');
     expect(view.getByText('CAPTURING')).toBeTruthy();
 
     await act(async () => {
       resolvePhoto({ uri: 'file:///cache/synthetic-photo.jpg' });
       await Promise.resolve();
     });
+    expect(haptics.trigger).toHaveBeenCalledWith('stop');
 
     await waitFor(() => expect(view.getByTestId('photo-save')).toBeTruthy());
     expect(
@@ -169,7 +180,7 @@ describe('Local photo capture', () => {
       capturedAt: expect.any(String),
       durationSeconds: 3,
       sourceUri: 'file:///cache/synthetic-photo.jpg',
-      vignetteTreatment: 'flash',
+      vignetteTreatment: 'ccd',
     });
     expect(
       view.getByText(

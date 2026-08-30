@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { FrameCard } from '../../components/FrameCard';
 import { colors, radii, spacing, typography } from '../../components/tokens';
+import type { HapticCue, HapticsPort } from '../../platform/haptics/feedback';
 import type {
   LocalContributionReview,
   LocalContributionReviewSnapshot,
@@ -12,6 +13,7 @@ import type {
 export const PROCESSING_SIMULATION_DELAY_MS = 450;
 
 type ContributionReviewPanelProps = {
+  haptics?: HapticsPort;
   refreshToken?: number;
   store?: LocalContributionReviewStore;
 };
@@ -22,6 +24,7 @@ type PendingAction = 'completing' | 'discarding' | 'submitting' | null;
 const actionError = 'The local contribution could not be updated. Try again.';
 
 export function ContributionReviewPanel({
+  haptics,
   refreshToken = 0,
   store: providedStore,
 }: ContributionReviewPanelProps) {
@@ -115,6 +118,7 @@ export function ContributionReviewPanel({
           return;
         }
         setPhase('locked');
+        triggerHaptic(haptics, 'locked');
       } catch {
         if (!mountedRef.current) {
           return;
@@ -124,7 +128,7 @@ export function ContributionReviewPanel({
         setPhase('processing');
       }
     },
-    [],
+    [haptics],
   );
 
   const submit = useCallback(async () => {
@@ -223,6 +227,16 @@ export function ContributionReviewPanel({
       ) : null}
     </View>
   );
+}
+
+function triggerHaptic(haptics: HapticsPort | undefined, cue: HapticCue): void {
+  if (haptics) {
+    try {
+      void haptics.trigger(cue).catch(() => undefined);
+    } catch {
+      // Haptics are optional and must not block local locking.
+    }
+  }
 }
 
 function LoadingState() {

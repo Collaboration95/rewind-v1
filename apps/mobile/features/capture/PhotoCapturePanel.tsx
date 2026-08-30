@@ -2,11 +2,14 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { PHOTO_DURATION_SECONDS } from '../../../../packages/domain/src/policy';
+import type { VignetteTreatment } from '../../../../packages/domain/src/models';
 
 import { colors, radii, spacing, typography } from '../../components/tokens';
 import type { CameraPhotoCaptureController } from '../../platform/camera/still';
+import type { HapticCue, HapticsPort } from '../../platform/haptics/feedback';
 import type { PhotoCaptureDependencies } from './photo-capture-dependencies';
 import { createLocalPhotoCaptureDependencies } from './photo-capture-dependencies';
+import { VignetteOverlay, VignetteTreatmentPicker } from './vignette-treatments';
 
 type PhotoCapturePhase =
   'capturing' | 'error' | 'loading' | 'ready' | 'review' | 'saved' | 'saving';
@@ -19,6 +22,7 @@ type CameraFacing = 'back' | 'front';
 
 type PhotoCapturePanelProps = {
   dependencies?: PhotoCaptureDependencies;
+  haptics?: HapticsPort;
   onContributionSaved?: () => void;
 };
 
@@ -28,6 +32,7 @@ const previewError = 'The camera preview could not start. Try again.';
 
 export function PhotoCapturePanel({
   dependencies: providedDependencies,
+  haptics: providedHaptics,
   onContributionSaved,
 }: PhotoCapturePanelProps) {
   const [dependencies, setDependencies] = useState<PhotoCaptureDependencies | null>(
@@ -41,6 +46,7 @@ export function PhotoCapturePanel({
   const [phase, setPhase] = useState<PhotoCapturePhase>(providedDependencies ? 'ready' : 'loading');
   const [pendingPhoto, setPendingPhoto] = useState<PendingPhoto | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [vignetteTreatment, setVignetteTreatment] = useState<VignetteTreatment>('flash');
   const controllerRef = useRef<CameraPhotoCaptureController | null>(null);
   const mountedRef = useRef(true);
 
@@ -91,6 +97,7 @@ export function PhotoCapturePanel({
   }, [phase, previewReady]);
 
   const localStore = dependencies?.store;
+  const haptics = dependencies?.haptics ?? providedHaptics;
   const discardPendingPhoto = useCallback(() => {
     const sourceUri = pendingPhoto?.sourceUri;
     resetForNewPhoto();
@@ -122,6 +129,7 @@ export function PhotoCapturePanel({
 
     setError(null);
     setPhase('capturing');
+    triggerHaptic(haptics, 'record');
 
     void controller
       .takePictureAsync()
@@ -133,6 +141,7 @@ export function PhotoCapturePanel({
           }
           return;
         }
+        triggerHaptic(haptics, 'stop');
         setPendingPhoto({ sourceUri: capture.uri });
         setPhase('review');
       })
@@ -143,7 +152,7 @@ export function PhotoCapturePanel({
         setError(photoError);
         setPhase('error');
       });
-  }, [phase, previewReady]);
+  }, [haptics, phase, previewReady]);
 
   const savePhoto = useCallback(async () => {
     if (!dependencies || !pendingPhoto || phase !== 'review') {
@@ -157,7 +166,7 @@ export function PhotoCapturePanel({
         capturedAt: new Date().toISOString(),
         durationSeconds: PHOTO_DURATION_SECONDS,
         sourceUri: pendingPhoto.sourceUri,
-        vignetteTreatment: 'flash',
+        vignetteTreatment,
       });
       if (!mountedRef.current) {
         return;
@@ -177,7 +186,7 @@ export function PhotoCapturePanel({
       setError(captureError);
       setPhase('error');
     }
-  }, [dependencies, onContributionSaved, pendingPhoto, phase]);
+  }, [dependencies, onContributionSaved, pendingPhoto, phase, vignetteTreatment]);
 
   const flipCamera = useCallback(() => {
     if (phase === 'ready' && previewReady) {
@@ -196,6 +205,12 @@ export function PhotoCapturePanel({
         <Text style={styles.mode}>STILL · 03 SEC</Text>
       </View>
 
+      <VignetteTreatmentPicker
+        disabled={phase !== 'ready' || !previewReady}
+        onChange={setVignetteTreatment}
+        value={vignetteTreatment}
+      />
+
       <View style={styles.previewFrame} testID="photo-camera-preview">
         {Preview && phase !== 'saved' ? (
           <Preview
@@ -207,6 +222,7 @@ export function PhotoCapturePanel({
             key={previewKey}
           />
         ) : null}
+        <VignetteOverlay testID="vignette-overlay" treatment={vignetteTreatment} />
         {!previewReady && phase !== 'error' && phase !== 'saved' ? (
           <View
             accessible
@@ -323,6 +339,16 @@ export function PhotoCapturePanel({
       </Text>
     </View>
   );
+}
+
+function triggerHaptic(haptics: HapticsPort | undefined, cue: HapticCue): void {
+  if (haptics) {
+    try {
+      void haptics.trigger(cue).catch(() => undefined);
+    } catch {
+      // Haptics are optional and must not block local capture.
+    }
+  }
 }
 
 function phaseLabel(phase: PhotoCapturePhase): string {

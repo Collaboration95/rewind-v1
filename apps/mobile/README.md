@@ -69,7 +69,8 @@ Chat, and Archive. It identifies the V1 local-only boundary and uses synthetic
 copy only. Camera now supports local still-photo and capped video capture;
 review, local submission, deterministic processing simulation, and
 metadata-only locking; reveal, chat, reminders, playback, and the simulation
-console remain in their dependency-ordered tickets. Shared
+console remain in their dependency-ordered tickets. Capture also offers four
+original presentation-only vignette treatments and safe haptic cues. Shared
 visual decisions are documented in the repository [`DESIGN.md`](../../DESIGN.md)
 and owned at runtime by `components/tokens.ts`.
 
@@ -122,6 +123,17 @@ panels hand accepted metadata to the local review panel. Review can discard a
 captured contribution or submit it through the policy-backed processing and
 lock states. The normal pre-reveal UI never displays a media URI, thumbnail, or
 player.
+
+### Vignette and haptic boundary
+
+The capture picker exposes the canonical `Flash`, `CCD`, `Home Movie`, and
+`Tape` treatments. These are original frame and preview overlays rendered by
+the UI; the selected value is stored as `vignetteTreatment` metadata for both
+photos and videos. The source pixels and audio are not filtered, transcoded,
+or otherwise altered. Record, stop, and lock-ready cues use the
+`platform/haptics/feedback.ts` port and the local Expo adapter. Haptics are
+optional feedback, so an unavailable device capability never blocks capture,
+review, or local locking.
 
 ## Local contribution review
 

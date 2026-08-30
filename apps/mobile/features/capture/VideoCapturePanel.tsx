@@ -5,11 +5,14 @@ import {
   MAX_VIDEO_DURATION_SECONDS,
   MIN_VIDEO_DURATION_SECONDS,
 } from '../../../../packages/domain/src/policy';
+import type { VignetteTreatment } from '../../../../packages/domain/src/models';
 
 import { colors, radii, spacing, typography } from '../../components/tokens';
 import type { CameraFacing, CameraRecordingController } from '../../platform/camera/recording';
+import type { HapticCue, HapticsPort } from '../../platform/haptics/feedback';
 import type { VideoCaptureDependencies } from './video-capture-dependencies';
 import { createLocalVideoCaptureDependencies } from './video-capture-dependencies';
+import { VignetteOverlay, VignetteTreatmentPicker } from './vignette-treatments';
 
 type VideoCapturePhase =
   'error' | 'loading' | 'ready' | 'recording' | 'review' | 'saved' | 'saving' | 'stopping';
@@ -21,6 +24,7 @@ type PendingVideo = {
 
 type VideoCapturePanelProps = {
   dependencies?: VideoCaptureDependencies;
+  haptics?: HapticsPort;
   onContributionSaved?: () => void;
 };
 
@@ -31,6 +35,7 @@ const shortVideoError = 'Record for at least one second before saving.';
 
 export function VideoCapturePanel({
   dependencies: providedDependencies,
+  haptics: providedHaptics,
   onContributionSaved,
 }: VideoCapturePanelProps) {
   const [dependencies, setDependencies] = useState<VideoCaptureDependencies | null>(
@@ -45,6 +50,7 @@ export function VideoCapturePanel({
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [pendingVideo, setPendingVideo] = useState<PendingVideo | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [vignetteTreatment, setVignetteTreatment] = useState<VignetteTreatment>('flash');
   const controllerRef = useRef<CameraRecordingController | null>(null);
   const recordingStartedAtRef = useRef<number | null>(null);
   const mountedRef = useRef(true);
@@ -116,6 +122,7 @@ export function VideoCapturePanel({
   }, [phase, previewReady]);
 
   const localStore = dependencies?.store;
+  const haptics = dependencies?.haptics ?? providedHaptics;
   const discardPendingVideo = useCallback(() => {
     const sourceUri = pendingVideo?.sourceUri;
     resetForNewRecording();
@@ -150,6 +157,7 @@ export function VideoCapturePanel({
     setElapsedSeconds(0);
     setError(null);
     setPhase('recording');
+    triggerHaptic(haptics, 'record');
 
     void controller
       .recordAsync({ maxDurationSeconds: MAX_VIDEO_DURATION_SECONDS })
@@ -187,7 +195,7 @@ export function VideoCapturePanel({
         setError(recordingError);
         setPhase('error');
       });
-  }, [dependencies, phase, previewReady]);
+  }, [dependencies, haptics, phase, previewReady]);
 
   const stopRecording = useCallback(() => {
     if (phase !== 'recording') {
@@ -195,6 +203,7 @@ export function VideoCapturePanel({
     }
 
     setPhase('stopping');
+    triggerHaptic(haptics, 'stop');
     try {
       controllerRef.current?.stopRecording();
     } catch {
@@ -202,7 +211,7 @@ export function VideoCapturePanel({
       setError(recordingError);
       setPhase('error');
     }
-  }, [phase]);
+  }, [haptics, phase]);
 
   const saveVideo = useCallback(async () => {
     if (!dependencies || !pendingVideo || phase !== 'review') {
@@ -216,7 +225,7 @@ export function VideoCapturePanel({
         capturedAt: new Date().toISOString(),
         durationSeconds: pendingVideo.durationSeconds,
         sourceUri: pendingVideo.sourceUri,
-        vignetteTreatment: 'flash',
+        vignetteTreatment,
       });
       if (!mountedRef.current) {
         return;
@@ -236,7 +245,7 @@ export function VideoCapturePanel({
       setError(captureError);
       setPhase('error');
     }
-  }, [dependencies, onContributionSaved, pendingVideo, phase]);
+  }, [dependencies, onContributionSaved, pendingVideo, phase, vignetteTreatment]);
 
   const flipCamera = useCallback(() => {
     if (phase === 'ready' && previewReady) {
@@ -255,6 +264,12 @@ export function VideoCapturePanel({
         <Text style={styles.mode}>VERTICAL · 1—15 SEC</Text>
       </View>
 
+      <VignetteTreatmentPicker
+        disabled={phase !== 'ready' || !previewReady}
+        onChange={setVignetteTreatment}
+        value={vignetteTreatment}
+      />
+
       <View style={styles.previewFrame} testID="camera-preview">
         {Preview && phase !== 'saved' ? (
           <Preview
@@ -266,6 +281,7 @@ export function VideoCapturePanel({
             key={previewKey}
           />
         ) : null}
+        <VignetteOverlay testID="vignette-overlay" treatment={vignetteTreatment} />
         {!previewReady && phase !== 'error' && phase !== 'saved' ? (
           <View
             accessible
@@ -375,6 +391,16 @@ export function VideoCapturePanel({
       </Text>
     </View>
   );
+}
+
+function triggerHaptic(haptics: HapticsPort | undefined, cue: HapticCue): void {
+  if (haptics) {
+    try {
+      void haptics.trigger(cue).catch(() => undefined);
+    } catch {
+      // Haptics are optional and must not block local capture.
+    }
+  }
 }
 
 function phaseLabel(phase: VideoCapturePhase): string {
