@@ -75,9 +75,11 @@ and owned at runtime by `components/tokens.ts`.
 The workspace has two complementary test lanes. The dependency-free Node
 contract tests cover Router/config, tooling, and route/accessibility boundaries;
 the Jest + React Native Testing Library lane renders components under the
-Expo-compatible `jest-expo` preset. `npm run test` runs both lanes once and
-never starts watch mode. Use `npm run test:contracts` or `npm run test:unit` to
-run one lane locally.
+Expo-compatible `jest-expo` preset. The framework-free `packages/domain/`
+package also runs a direct Node fixture and dependency-boundary test. `npm run
+test` runs all three lanes once and never starts watch mode. Use
+`npm run test:contracts`, `npm run test:domain`, or `npm run test:unit` to run
+one lane locally.
 
 ## Selector and accessibility contract
 

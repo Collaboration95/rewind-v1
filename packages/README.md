@@ -6,5 +6,6 @@ Reusable product code belongs here. Planned boundaries are:
   repository ports.
 - [`ui/`](ui/README.md) — shared Rewind visual primitives and tokens.
 
-Do not create packages until an issue gives them a concrete consumer and
-verification path.
+Create or extend a package only when an issue gives it a concrete consumer and
+verification path. The active [`domain/`](domain/README.md) package is the
+framework-free boundary established by issue #14.

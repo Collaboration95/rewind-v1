@@ -4,11 +4,13 @@ on:
   push:
     paths:
       - "apps/mobile/**"
+      - "packages/domain/**"
       - "Makefile"
       - ".github/workflows/mobile-quality.yml"
   pull_request:
     paths:
       - "apps/mobile/**"
+      - "packages/domain/**"
       - "Makefile"
       - ".github/workflows/mobile-quality.yml"
   workflow_dispatch:
