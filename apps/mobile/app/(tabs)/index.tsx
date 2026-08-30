@@ -4,9 +4,15 @@ import { FrameCard } from '../../components/FrameCard';
 import { ScreenFrame } from '../../components/ScreenFrame';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { colors, spacing, typography } from '../../components/tokens';
+import { LocalGroupHome } from '../../features/group/LocalGroupHome';
+import type { LocalHomeStore } from '../../features/group/local-home';
 import { LocalProfileSwitcher } from '../../features/session/LocalProfileSwitcher';
 
-export default function HomeScreen() {
+export type HomeScreenProps = {
+  homeStore?: LocalHomeStore;
+};
+
+export default function HomeScreen({ homeStore }: HomeScreenProps = {}) {
   return (
     <ScreenFrame contentContainerStyle={styles.content} testID="screen-home">
       <ScreenHeader statusTestID="home-local-status" testID="home-header" />
@@ -29,11 +35,13 @@ export default function HomeScreen() {
         </Text>
       </FrameCard>
 
+      <LocalGroupHome store={homeStore} />
+
       <LocalProfileSwitcher />
 
       <View style={styles.footerNote}>
         <Text style={styles.footerLabel}>THE FIRST FRAME</Text>
-        <Text style={styles.footerBody}>Capture, chat, and reveal arrive in the next slices.</Text>
+        <Text style={styles.footerBody}>Chat and reveal arrive in the next slices.</Text>
         <View style={styles.footerLine} />
       </View>
     </ScreenFrame>

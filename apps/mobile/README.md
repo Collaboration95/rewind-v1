@@ -98,6 +98,14 @@ restored when the app relaunches. This is a simulated actor selector for local
 commands and queries, not sign-in, authentication, or a security boundary;
 membership is checked by the domain policy before a selection is persisted.
 
+## Local group home
+
+The Home route restores the seeded group, prompt, cycle status, current actor
+quota, and lock-safe activity through a local repository port. Pre-reveal
+activity is composed from the domain's safe summaries, so the normal screen
+does not mount a thumbnail, player, or local media URI. Its invite card is a
+non-delivering local preview with no network or deep-link path.
+
 ## Camera capability boundary
 
 `platform/camera/permissions.ts` defines the camera and microphone permission
