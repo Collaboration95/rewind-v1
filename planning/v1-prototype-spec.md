@@ -8,13 +8,13 @@ private group time-capsule product; it is not a submission build or cloud MVP.
 ## 1. Outcome
 
 V1 makes the future product's phone experience tangible before any cloud work:
-one person can use a real phone to record a short video, persist it locally,
-lock it under a simulated group policy, receive a local reminder, switch among
-seeded members, chat, advance a demo clock, reveal a locally assembled capsule,
-play it, and invoke the device share sheet.
+one person can use a real phone to capture a still photo or short video, persist
+it locally, lock it under a simulated group policy, receive a local reminder,
+switch among seeded members, chat, advance a demo clock, reveal a locally
+assembled capsule, play it, and invoke the device share sheet.
 
 The primary learning outcome is end-to-end React Native/Expo practice across
-permissions, camera recording, files, local storage, notifications, navigation,
+permissions, camera capture, files, local storage, notifications, navigation,
 accessibility, device testing, CI, Git/GitHub, and agent-led incremental work.
 It does **not** prove multi-user networking, OIDC, cloud media processing, or
 production privacy/security.
@@ -23,13 +23,16 @@ production privacy/security.
 
 ### In scope — real local phone operations
 
-- iOS/Android camera and microphone permission request, denial/retry state,
-  front/back selection, and vertical video recording capped at 15 seconds.
-- Capture review with discard/re-record; persist the accepted file from cache to
-  the app document directory and persist its metadata in local SQLite.
+- iOS/Android camera permission request, denial/retry state, front/back
+  selection, still-photo capture, and vertical video recording capped at 15
+  seconds. Video also requests microphone permission.
+- Capture review with discard/re-record; persist the accepted photo or video file
+  from cache to the app document directory and persist its metadata in local
+  SQLite.
 - Original visual camera shell: a selectable `Flash`, `CCD`, `Home Movie`, or
-  `Tape` preset represented by original overlay treatment and stored metadata.
-  It does not claim to alter video pixels yet.
+  `Tape` preset represented by an original preview/frame overlay and stored
+  metadata for either media kind. It does not claim to alter source pixels or
+  audio.
 - On-device haptic feedback for record, successful lock, and reveal.
 - Local profile switcher for five seeded people in one seeded private group;
   profile data is a demo device control, never sign-in.
@@ -43,22 +46,22 @@ production privacy/security.
   authored as the currently selected simulated member.
 - A visible developer-only simulation console for advancing/resetting a
   deterministic clock and moving a cycle to reveal.
-- A locally generated capsule playlist ordered by capture time; archive video
-  playback and the native share sheet after reveal.
+- A locally generated capsule playlist ordered by capture time; archive playback
+  of local captured media and the native share sheet after reveal.
 - Original camera-first, dark, nostalgic social-feed visual language using
   familiar tab/feed patterns, rather than copied screens or assets.
 
 ### Simulated in V1
 
-| Future product behaviour | V1 simulation and label |
-| --- | --- |
-| OIDC, invite links, 2–10 real users | Seeded profiles and a local invite-preview screen. “Local demo only” is always visible in developer mode. |
-| Asynchronous upload/FFmpeg job | A deterministic local processing timer/state sequence with failure/retry test controls. |
-| Actual filter/transcode/audio normalization | Preset metadata and visual overlay only; source video is otherwise untouched. |
-| Four-week cycle and scheduling service | Configurable local clock; one-minute demo, one-day demo, and four-week-equivalent policy modes. |
-| Scheduled server push to many devices | Device-local notification only, plus in-app log. |
-| Compiled group film in storage | A local ordered playlist; no media concatenation/re-encode. |
-| Secure download URL | Native local share sheet for an already-local revealed file. |
+| Future product behaviour                    | V1 simulation and label                                                                                           |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| OIDC, invite links, 2–10 real users         | Seeded profiles and a local invite-preview screen. “Local demo only” is always visible in developer mode.         |
+| Asynchronous upload/FFmpeg job              | A deterministic local processing timer/state sequence with failure/retry test controls.                           |
+| Actual filter/transcode/audio normalization | Vignette-treatment metadata and visual overlay only; source photo/video pixels and audio are otherwise untouched. |
+| Four-week cycle and scheduling service      | Configurable local clock; one-minute demo, one-day demo, and four-week-equivalent policy modes.                   |
+| Scheduled server push to many devices       | Device-local notification only, plus in-app log.                                                                  |
+| Compiled group film in storage              | A local ordered playlist; no media concatenation/re-encode.                                                       |
+| Secure download URL                         | Native local share sheet for an already-local revealed file.                                                      |
 
 ### Explicitly out of scope
 
@@ -67,12 +70,12 @@ production privacy/security.
   third-party auth, Expo push service, API routes, Terraform execution, or EAS
   cloud build/deploy.
 - Real multi-device synchronization, real invitation delivery, public feeds,
-  profiles, followers, gallery import, image posts, attachment chat, read
+  profiles, followers, gallery import, image editing, attachment chat, read
   receipts, edit/delete messages, live stream, public sharing, or app-store
   publication.
-- Actual non-destructive video trimming, true post-processing, custom GPU
-  filters, FFmpeg, merged media output, thumbnail extraction, licensed music,
-  or a claim that a demo profile provides security.
+- Actual media trimming/editing, true post-processing, custom GPU filters,
+  FFmpeg, merged media output, thumbnail extraction, licensed music, or a claim
+  that a demo profile provides security.
 - Copying Dazz Cam, Instagram, Lapse, 1SE, or another product's brand, source,
   assets, filters, visual design, camera names, or text.
 
@@ -82,11 +85,12 @@ production privacy/security.
    profile and the one seeded group.
 2. On **Home**, see the current prompt, simulated time left, weekly quota, and
    lock-safe group activity (no playable unrevealed clips).
-3. Go to **Camera**, approve camera/microphone permissions, choose a preset,
-   record up to 15 seconds, then review it.
-4. Accept the clip. Rewind copies it into app storage, records its metadata,
+3. Go to **Camera**, approve the required camera permission (and microphone for
+   video), choose a media kind and preset, capture a photo or record up to 15
+   seconds, then review it.
+4. Accept the capture. Rewind copies it into app storage, records its metadata,
    briefly shows `Processing`, and changes it to `Locked`; haptics confirm the
-   result. The clip cannot be replayed from the normal pre-reveal UI.
+   result. The capture cannot be replayed from the normal pre-reveal UI.
 5. Use the developer console to switch a profile, add a chat message/reply/
    reaction, advance time, or fire a short demo reminder.
 6. Move the clock through the reveal boundary. The capsule shows `Premiere`,
@@ -99,15 +103,15 @@ behaviours, not merely mocked screenshots.
 
 ## 4. Information architecture and screen contract
 
-| Route/screen | Purpose | Key observable controls |
-| --- | --- | --- |
-| `/(app)/home` | Group overview, prompt, quota, locked metadata, reveal status | Camera tab, chat tab, quota, developer-console access |
-| `/(app)/camera` | Record device video under a selected visual preset | permission retry, preset selector, camera flip, record/stop, timer |
-| `/(app)/capture-review` | Accept or discard the new local file | submit/lock, re-record, file/preset summary |
-| `/(app)/chat` | Local group text, replies, reactions | composer, reply, reaction, profile label |
-| `/(app)/archive` | Revealed capsules and local playback | capsule selector, player, share button |
-| `/(app)/settings` | Local reminder preference and app/device status | enable/disable, schedule, demo reminder, reset confirmation |
-| `/(dev)/simulation` | Seed profile, clock, failure and scenario controls | profile selector, time advance, reveal, reset, inject failure |
+| Route/screen            | Purpose                                                                | Key observable controls                                                                          |
+| ----------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `/(app)/home`           | Group overview, prompt, quota, locked metadata, reveal status          | Camera tab, chat tab, quota, developer-console access                                            |
+| `/(app)/camera`         | Capture a still photo or vertical video under a selected visual preset | permission retry, media-kind choice, preset selector, camera flip, shutter or record/stop, timer |
+| `/(app)/capture-review` | Accept or discard the new local media file                             | submit/lock, re-record, media-kind/file/preset summary                                           |
+| `/(app)/chat`           | Local group text, replies, reactions                                   | composer, reply, reaction, profile label                                                         |
+| `/(app)/archive`        | Revealed capsules and local playback                                   | capsule selector, player, share button                                                           |
+| `/(app)/settings`       | Local reminder preference and app/device status                        | enable/disable, schedule, demo reminder, reset confirmation                                      |
+| `/(dev)/simulation`     | Seed profile, clock, failure and scenario controls                     | profile selector, time advance, reveal, reset, inject failure                                    |
 
 Navigation is a four-tab shell: Home, Camera, Chat, Archive. Settings and the
 simulation console are secondary routes. The future product can retain the
@@ -123,7 +127,8 @@ Member(id, displayName, avatarSeed)
 Group(id, name, timezone, memberIds, prompt)
 Cycle(id, groupId, startAt, duration, status)
 Contribution(id, cycleId, memberId, capturedAt, durationSeconds,
-             preset, localUri, state, processingAttempt, deletedAt)
+             mediaKind, vignetteTreatment, localUri, state, processingAttempt,
+             deletedAt)
 Message(id, groupId, memberId, body, replyToId, createdAt)
 Reaction(id, messageId, memberId, emoji)
 Capsule(id, cycleId, contributionIds, status, revealedAt)
@@ -131,6 +136,23 @@ ReminderPreference(memberId, enabled, weekday, hour, minute, notificationId)
 SimulationClock(now, mode)
 AuditEvent(id, type, at, subjectId, metadata)
 ```
+
+### Local media contract
+
+The contract accepted in [issue #45](https://github.com/Collaboration95/rewind-v1/issues/45)
+is deliberately narrow:
+
+- `mediaKind` is either `photo` or `video`; both are local contributions and
+  consume one of the five weekly slots.
+- A video has its measured duration from 1–15 seconds. A photo stores exactly
+  `durationSeconds: 3` for quota accounting and deterministic playlist display
+  ordering. That value is not an instruction to generate a video segment.
+- `vignetteTreatment` is one of `flash`, `ccd`, `home-movie`, or `tape`. It is
+  original preview/frame-overlay metadata; it never edits source pixels,
+  transcodes media, or normalizes audio.
+- An accepted file may be copied from cache to the app-managed document
+  directory and its local URI persisted for local adapters. Before reveal,
+  normal UI still exposes no URI, thumbnail, image, player, or share action.
 
 ### Contribution state machine
 
@@ -144,8 +166,9 @@ recording → captured → processing → locked ───────→ reveal
 - Capture may begin only when the current member belongs to the local group,
   the cycle is collecting, the weekly clip count remains below five, and the
   current used duration plus the new clip is no more than 30 seconds.
-- A clip duration is 1–15 seconds. The capture adapter must stop at 15 seconds;
-  policy also rejects invalid test data.
+- A video duration is 1–15 seconds and the capture adapter must stop at 15
+  seconds. A photo contributes exactly three display seconds. Policy rejects
+  invalid test data for either media kind.
 - The first permitted deletion in a cycle-week restores its clip count/duration
   budget. A second delete is rejected with a clear reason and audit event.
 - Processing may fail by test control. Retry is explicit, bounded, idempotent,

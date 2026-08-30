@@ -5,7 +5,13 @@ const { spawnSync } = require('node:child_process');
 // `test` script runs this lane before the Jest component lane.
 const result = spawnSync(
   process.execPath,
-  ['--test', 'tests/scaffold.test.mjs', 'tests/tooling.test.mjs', 'tests/routes.test.mjs'],
+  [
+    '--test',
+    'tests/scaffold.test.mjs',
+    'tests/tooling.test.mjs',
+    'tests/routes.test.mjs',
+    'tests/media-contract.test.mjs',
+  ],
   { stdio: 'inherit' },
 );
 

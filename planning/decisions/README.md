@@ -6,3 +6,4 @@ supersedes it and link both records.
 
 - [`ADR-0001-v1-local-first.md`](ADR-0001-v1-local-first.md)
 - [`ADR-0002-repository-topology.md`](ADR-0002-repository-topology.md)
+- [`ADR-0003-local-media-and-vignette-contract.md`](ADR-0003-local-media-and-vignette-contract.md)
