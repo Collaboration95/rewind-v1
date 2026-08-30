@@ -8,6 +8,9 @@ const appRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const repoRoot = resolve(appRoot, '../..');
 const packageManifest = JSON.parse(readFileSync(join(appRoot, 'package.json'), 'utf8'));
 const jestConfig = readFileSync(join(appRoot, 'jest.config.cjs'), 'utf8');
+const domainManifest = JSON.parse(
+  readFileSync(join(repoRoot, 'packages/domain/package.json'), 'utf8'),
+);
 const makefile = readFileSync(join(repoRoot, 'Makefile'), 'utf8');
 const workflow = readFileSync(join(repoRoot, '.github/workflows/mobile-quality.yml'), 'utf8');
 
@@ -22,10 +25,24 @@ test('mobile quality scripts are deterministic and non-watch', () => {
   assert.equal(scripts.ios, 'npm run open:ios');
   assert.equal(scripts.android, 'npm run open:android');
   assert.equal(scripts.lint, 'eslint .');
-  assert.equal(scripts.typecheck, 'tsc --noEmit');
+  assert.match(scripts.typecheck, /^tsc --noEmit && npm run typecheck:domain$/);
+  assert.equal(scripts['typecheck:domain'], 'npm --prefix ../../packages/domain run typecheck');
   assert.match(scripts.test, /^node scripts\/test\.cjs && jest --runInBand$/);
   assert.equal(scripts['test:contracts'], 'node scripts/test.cjs');
+  assert.equal(
+    scripts['test:domain'],
+    'node --experimental-strip-types --test ../../packages/domain/tests/domain.test.mjs ../../packages/domain/tests/boundary.test.mjs',
+  );
   assert.equal(scripts['test:unit'], 'jest --runInBand');
+
+  assert.equal(
+    domainManifest.scripts.typecheck,
+    '../../apps/mobile/node_modules/.bin/tsc --noEmit -p tsconfig.json',
+  );
+  assert.equal(
+    domainManifest.scripts.test,
+    'node --experimental-strip-types --test tests/domain.test.mjs tests/boundary.test.mjs',
+  );
 
   assert.match(jestConfig, /preset: 'jest-expo'/);
   assert.match(jestConfig, /setupFilesAfterEnv: \['<rootDir>\/tests\/setup\.ts'\]/);
@@ -80,6 +97,7 @@ test('mobile workflow is cached, local-only, and emulator-free', () => {
   assert.match(workflow, /npm run lint/);
   assert.match(workflow, /npm run typecheck/);
   assert.match(workflow, /npm run test/);
+  assert.match(workflow, /packages\/domain\/\*\*/);
   assert.match(workflow, /npm run build:web/);
   assert.doesNotMatch(workflow, /secrets?\.|\beas\b|device farm|emulator/i);
 });

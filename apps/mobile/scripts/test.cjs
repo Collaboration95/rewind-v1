@@ -6,11 +6,14 @@ const { spawnSync } = require('node:child_process');
 const result = spawnSync(
   process.execPath,
   [
+    '--experimental-strip-types',
     '--test',
     'tests/scaffold.test.mjs',
     'tests/tooling.test.mjs',
     'tests/routes.test.mjs',
     'tests/media-contract.test.mjs',
+    '../../packages/domain/tests/domain.test.mjs',
+    '../../packages/domain/tests/boundary.test.mjs',
   ],
   { stdio: 'inherit' },
 );
