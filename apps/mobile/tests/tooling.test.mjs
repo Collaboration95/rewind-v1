@@ -8,6 +8,7 @@ const appRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const repoRoot = resolve(appRoot, '../..');
 const packageManifest = JSON.parse(readFileSync(join(appRoot, 'package.json'), 'utf8'));
 const jestConfig = readFileSync(join(appRoot, 'jest.config.cjs'), 'utf8');
+const metroConfig = readFileSync(join(appRoot, 'metro.config.js'), 'utf8');
 const domainManifest = JSON.parse(
   readFileSync(join(repoRoot, 'packages/domain/package.json'), 'utf8'),
 );
@@ -30,6 +31,10 @@ test('mobile quality scripts are deterministic and non-watch', () => {
   assert.match(scripts.test, /^node scripts\/test\.cjs && jest --runInBand$/);
   assert.equal(scripts['test:contracts'], 'node scripts/test.cjs');
   assert.equal(
+    scripts['test:database'],
+    'node --experimental-strip-types --test tests/local-database.test.mjs',
+  );
+  assert.equal(
     scripts['test:domain'],
     'node --experimental-strip-types --test ../../packages/domain/tests/domain.test.mjs ../../packages/domain/tests/boundary.test.mjs',
   );
@@ -47,6 +52,8 @@ test('mobile quality scripts are deterministic and non-watch', () => {
   assert.match(jestConfig, /preset: 'jest-expo'/);
   assert.match(jestConfig, /setupFilesAfterEnv: \['<rootDir>\/tests\/setup\.ts'\]/);
   assert.match(jestConfig, /tests\/\*\*\/\*\.test\.tsx/);
+  assert.match(metroConfig, /packages\/domain/);
+  assert.match(metroConfig, /watchFolders/);
   assert.match(scripts.check, /format:check/);
   assert.match(scripts.check, /lint/);
   assert.match(scripts.check, /typecheck/);

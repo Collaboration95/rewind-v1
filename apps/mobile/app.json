@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "scheme": "rewind",
     "userInterfaceStyle": "dark",
-    "plugins": ["expo-router"],
+    "plugins": ["expo-router", "expo-sqlite"],
     "ios": {
       "bundleIdentifier": "com.rewind.v1"
     },
