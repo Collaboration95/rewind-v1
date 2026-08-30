@@ -64,7 +64,9 @@ describe('Camera permission preflight', () => {
       settings: { open: jest.fn(async () => undefined) },
     };
 
-    const view = await render(<CameraScreen capabilities={capabilities} />);
+    const view = await render(
+      <CameraScreen capabilities={capabilities} mediaKind="photo" showCapture={false} />,
+    );
 
     expect(view.getByTestId('camera-permission-loading')).toBeTruthy();
     releaseCameraCheck(snapshot('granted'));
@@ -74,7 +76,9 @@ describe('Camera permission preflight', () => {
 
   it('requests camera access and then exposes the ready state', async () => {
     const { cameraPort, capabilities } = createCapabilities('undetermined');
-    const view = await render(<CameraScreen capabilities={capabilities} />);
+    const view = await render(
+      <CameraScreen capabilities={capabilities} mediaKind="photo" showCapture={false} />,
+    );
 
     await waitFor(() => expect(view.getByTestId('camera-permission-action')).toBeTruthy());
     expect(view.getByText('Allow camera access to continue with a local photo.')).toBeTruthy();
@@ -87,7 +91,9 @@ describe('Camera permission preflight', () => {
 
   it('distinguishes retryable denial from a blocked permission', async () => {
     const denied = createCapabilities('denied');
-    const deniedView = await render(<CameraScreen capabilities={denied.capabilities} />);
+    const deniedView = await render(
+      <CameraScreen capabilities={denied.capabilities} mediaKind="photo" showCapture={false} />,
+    );
 
     await waitFor(() =>
       expect(
@@ -99,7 +105,9 @@ describe('Camera permission preflight', () => {
     await waitFor(() => expect(deniedView.getByTestId('camera-permission-ready')).toBeTruthy());
 
     const blocked = createCapabilities('blocked');
-    const blockedView = await render(<CameraScreen capabilities={blocked.capabilities} />);
+    const blockedView = await render(
+      <CameraScreen capabilities={blocked.capabilities} mediaKind="photo" showCapture={false} />,
+    );
 
     await waitFor(() => expect(blockedView.getByTestId('camera-permission-settings')).toBeTruthy());
     await fireEvent.press(blockedView.getByTestId('camera-permission-settings'));
@@ -109,7 +117,9 @@ describe('Camera permission preflight', () => {
 
   it('requires microphone access only after switching to video', async () => {
     const { capabilities, microphonePort } = createCapabilities('granted', 'undetermined');
-    const view = await render(<CameraScreen capabilities={capabilities} />);
+    const view = await render(
+      <CameraScreen capabilities={capabilities} mediaKind="photo" showCapture={false} />,
+    );
 
     await waitFor(() => expect(view.getByTestId('camera-permission-ready')).toBeTruthy());
     await fireEvent.press(view.getByTestId('camera-media-video'));
@@ -128,7 +138,9 @@ describe('Camera permission preflight', () => {
 
   it('keeps unsupported hardware actionable without presenting recording controls', async () => {
     const { capabilities } = createCapabilities('unsupported');
-    const view = await render(<CameraScreen capabilities={capabilities} />);
+    const view = await render(
+      <CameraScreen capabilities={capabilities} mediaKind="photo" showCapture={false} />,
+    );
 
     await waitFor(() =>
       expect(view.getByText('Camera access is not available on this device.')).toBeTruthy(),

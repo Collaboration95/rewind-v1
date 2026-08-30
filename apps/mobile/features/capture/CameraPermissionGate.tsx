@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { FrameCard } from '../../components/FrameCard';
@@ -15,6 +16,9 @@ import {
 
 type CameraPermissionGateProps = {
   capabilities?: CameraCapabilityPort;
+  initialMediaKind?: CameraMediaKind;
+  renderReady?: (mediaKind: CameraMediaKind) => ReactNode;
+  showMediaKindPicker?: boolean;
 };
 
 const resourceLabels: Record<CameraPermissionResource, string> = {
@@ -67,8 +71,13 @@ function getActionLabel(
   return phase === 'grant' ? `Allow ${name} permission` : `Retry ${name} permission`;
 }
 
-export function CameraPermissionGate({ capabilities }: CameraPermissionGateProps) {
-  const [mediaKind, setMediaKind] = useState<CameraMediaKind>('photo');
+export function CameraPermissionGate({
+  capabilities,
+  initialMediaKind = 'photo',
+  renderReady,
+  showMediaKindPicker = true,
+}: CameraPermissionGateProps) {
+  const [mediaKind, setMediaKind] = useState<CameraMediaKind>(initialMediaKind);
   const permission = useCameraPermissionState(mediaKind, capabilities);
   const {
     error,
@@ -81,6 +90,7 @@ export function CameraPermissionGate({ capabilities }: CameraPermissionGateProps
   } = permission;
   const isBusy = pendingAction !== null;
   const statusCopy = error ?? getStatusCopy(phase, mediaKind, requiredPermission);
+  const readyContent = renderReady?.(mediaKind);
 
   return (
     <FrameCard
@@ -94,23 +104,25 @@ export function CameraPermissionGate({ capabilities }: CameraPermissionGateProps
         <Text style={styles.mode}>LOCAL DEVICE</Text>
       </View>
 
-      <View style={styles.kindSection}>
-        <Text style={styles.sectionLabel}>CAPTURE KIND</Text>
-        <View style={styles.kindOptions}>
-          <MediaKindButton
-            disabled={isBusy}
-            kind="photo"
-            onPress={() => setMediaKind('photo')}
-            selected={mediaKind === 'photo'}
-          />
-          <MediaKindButton
-            disabled={isBusy}
-            kind="video"
-            onPress={() => setMediaKind('video')}
-            selected={mediaKind === 'video'}
-          />
+      {showMediaKindPicker ? (
+        <View style={styles.kindSection}>
+          <Text style={styles.sectionLabel}>CAPTURE KIND</Text>
+          <View style={styles.kindOptions}>
+            <MediaKindButton
+              disabled={isBusy}
+              kind="photo"
+              onPress={() => setMediaKind('photo')}
+              selected={mediaKind === 'photo'}
+            />
+            <MediaKindButton
+              disabled={isBusy}
+              kind="video"
+              onPress={() => setMediaKind('video')}
+              selected={mediaKind === 'video'}
+            />
+          </View>
         </View>
-      </View>
+      ) : null}
 
       <View
         accessible
@@ -133,9 +145,11 @@ export function CameraPermissionGate({ capabilities }: CameraPermissionGateProps
             CHECKING…
           </Text>
         ) : phase === 'ready' ? (
-          <Text style={styles.actionNote} testID="camera-permission-ready">
-            ACCESS READY · RECORDING ARRIVES NEXT
-          </Text>
+          (readyContent ?? (
+            <Text style={styles.actionNote} testID="camera-permission-ready">
+              ACCESS READY · RECORDING ARRIVES NEXT
+            </Text>
+          ))
         ) : phase === 'blocked' ? (
           <View style={styles.actionStack}>
             <PermissionButton
@@ -184,7 +198,9 @@ export function CameraPermissionGate({ capabilities }: CameraPermissionGateProps
       </View>
 
       <Text accessibilityRole="text" style={styles.disclosure}>
-        LOCAL PERMISSION CHECK · NO RECORDING IN THIS SLICE
+        {mediaKind === 'video' && renderReady
+          ? 'LOCAL PERMISSION CHECK · RECORDING STAYS ON DEVICE'
+          : 'LOCAL PERMISSION CHECK · NO RECORDING IN THIS SLICE'}
       </Text>
     </FrameCard>
   );
