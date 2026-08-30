@@ -34,3 +34,14 @@ audits carry the normalized week key and can be rehydrated after relaunch. V1
 allows five contributions and 30 total seconds per member/cycle, fixed
 three-second photos, 1–15 second videos, one retry, and one delete per
 simulated week.
+
+## Simulation and capsule assembly
+
+`src/time/` advances an injected instant by deterministic minute, day, or
+four-week-equivalent steps without sleeping. `real` mode is intentionally a
+no-op for the simulation command because a device clock adapter supplies that
+instant. `src/capsule/` and `src/cycle/` document the collecting →
+reveal-pending → premiere → archived path and the delayed processing-failure
+path. The assembler returns a `local-playlist` containing chronologically
+ordered eligible contribution IDs; it never creates a combined media file or
+chooses a low-contribution filler policy.

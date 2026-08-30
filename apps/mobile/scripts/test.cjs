@@ -16,6 +16,7 @@ const result = spawnSync(
     '../../packages/domain/tests/domain.test.mjs',
     '../../packages/domain/tests/boundary.test.mjs',
     '../../packages/domain/tests/policy.test.mjs',
+    '../../packages/domain/tests/simulation.test.mjs',
   ],
   { stdio: 'inherit' },
 );
