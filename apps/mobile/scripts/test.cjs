@@ -12,6 +12,7 @@ const result = spawnSync(
     'tests/tooling.test.mjs',
     'tests/routes.test.mjs',
     'tests/media-contract.test.mjs',
+    'tests/camera-contract.test.mjs',
     'tests/local-database.test.mjs',
     '../../packages/domain/tests/domain.test.mjs',
     '../../packages/domain/tests/boundary.test.mjs',

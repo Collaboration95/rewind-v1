@@ -6,7 +6,18 @@
     "orientation": "portrait",
     "scheme": "rewind",
     "userInterfaceStyle": "dark",
-    "plugins": ["expo-router", "expo-sqlite"],
+    "plugins": [
+      "expo-router",
+      "expo-sqlite",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow Rewind to use the camera for local time-capsule captures.",
+          "microphonePermission": "Allow Rewind to use the microphone for local video captures.",
+          "recordAudioAndroid": true
+        }
+      ]
+    ],
     "ios": {
       "bundleIdentifier": "com.rewind.v1"
     },

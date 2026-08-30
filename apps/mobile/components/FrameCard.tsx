@@ -7,13 +7,25 @@ import { colors, radii, spacing } from './tokens';
 type FrameCardProps = {
   accessibilityLabel: string;
   accent: ColorValue;
+  accessible?: boolean;
   children: ReactNode;
   testID: string;
 };
 
-export function FrameCard({ accessibilityLabel, accent, children, testID }: FrameCardProps) {
+export function FrameCard({
+  accessibilityLabel,
+  accent,
+  accessible = true,
+  children,
+  testID,
+}: FrameCardProps) {
   return (
-    <View accessible accessibilityLabel={accessibilityLabel} style={styles.card} testID={testID}>
+    <View
+      accessible={accessible}
+      accessibilityLabel={accessibilityLabel}
+      style={styles.card}
+      testID={testID}
+    >
       <View style={[styles.rule, { backgroundColor: accent }]} />
       <View style={styles.copy}>{children}</View>
     </View>
