@@ -6,6 +6,7 @@ import type { AuditEvent } from '../../../packages/domain/src/models';
 import {
   PROCESSING_SIMULATION_DELAY_MS,
   ContributionReviewPanel,
+  type ProcessingSimulationPort,
 } from '../features/capture/ContributionReviewPanel';
 import type {
   LocalContributionReview,
@@ -64,8 +65,19 @@ function createStore({
       currentReview = { ...currentReview!, state: 'locked' };
       return accepted(currentReview, 'processing.completed');
     }),
+    deleteContribution: jest.fn(async () => {
+      currentReview = null;
+      return accepted(
+        createReview({ fileStatus: 'missing', state: 'deleted' }),
+        'contribution.deleted',
+      );
+    }),
     discard: jest.fn(async () => {
       currentReview = null;
+    }),
+    failProcessing: jest.fn(async () => {
+      currentReview = { ...currentReview!, state: 'failed' };
+      return accepted(currentReview, 'processing.failed');
     }),
     load: jest.fn(async () => ({ cycle: seededCycle, review: currentReview })),
     startProcessing: jest.fn(async (): Promise<LocalContributionReviewOutcome> => {
@@ -80,6 +92,10 @@ function createStore({
       }
       currentReview = { ...currentReview!, processingAttempt: 1, state: 'processing' };
       return accepted(currentReview, 'processing.started');
+    }),
+    retryProcessing: jest.fn(async (): Promise<LocalContributionReviewOutcome> => {
+      currentReview = { ...currentReview!, processingAttempt: 2, state: 'processing' };
+      return accepted(currentReview, 'processing.retried');
     }),
   };
   return { store, getReview: () => currentReview };
@@ -165,5 +181,69 @@ describe('Contribution review and local lock flow', () => {
     expect(
       view.queryByText('file:///documents/rewind-captures/contribution-review-ui.mov'),
     ).toBeNull();
+  });
+
+  it('requires an inline confirmation before deleting a locked local contribution', async () => {
+    const { store, getReview } = createStore({
+      initialReview: createReview({ processingAttempt: 1, state: 'locked' }),
+    });
+    const view = await render(<ContributionReviewPanel store={store} />);
+
+    await waitFor(() => expect(view.getByTestId('review-delete')).toBeTruthy());
+    await fireEvent.press(view.getByTestId('review-delete'));
+    expect(view.getByTestId('review-delete-confirmation')).toHaveTextContent(
+      /This uses the one deletion allowed in the simulated week\./,
+    );
+    expect(store.deleteContribution).not.toHaveBeenCalled();
+
+    await fireEvent.press(view.getByTestId('review-delete-confirm'));
+    await waitFor(() => expect(view.getByTestId('review-empty')).toBeTruthy());
+    expect(store.deleteContribution).toHaveBeenCalledWith('contribution-review-ui');
+    expect(getReview()).toBeNull();
+  });
+
+  it('shows a safe processing failure and retries once without exposing media', async () => {
+    jest.useFakeTimers();
+    const { store } = createStore();
+    const processingSimulation: ProcessingSimulationPort = {
+      shouldFail: jest.fn((review: LocalContributionReview) => review.processingAttempt === 1),
+    };
+    const view = await render(
+      <ContributionReviewPanel processingSimulation={processingSimulation} store={store} />,
+    );
+
+    await waitFor(() => expect(view.getByTestId('review-submit')).toBeTruthy());
+    await act(async () => {
+      fireEvent.press(view.getByTestId('review-submit'));
+      await Promise.resolve();
+    });
+    await waitFor(() =>
+      expect(view.getByTestId('review-state')).toHaveTextContent('PROCESSING LOCALLY'),
+    );
+    await act(async () => {
+      jest.advanceTimersByTime(PROCESSING_SIMULATION_DELAY_MS);
+      await Promise.resolve();
+    });
+    await waitFor(() => expect(view.getByTestId('review-processing-delayed')).toBeTruthy());
+    expect(view.getByTestId('review-retry-processing')).toBeTruthy();
+    expect(store.failProcessing).toHaveBeenCalledWith('contribution-review-ui');
+    expect(view.queryByText(/file:\/\/\/documents/)).toBeNull();
+
+    await act(async () => {
+      fireEvent.press(view.getByTestId('review-retry-processing'));
+      await Promise.resolve();
+    });
+    await waitFor(() =>
+      expect(view.getByTestId('review-state')).toHaveTextContent('PROCESSING LOCALLY'),
+    );
+    await act(async () => {
+      jest.advanceTimersByTime(PROCESSING_SIMULATION_DELAY_MS);
+      await Promise.resolve();
+    });
+    await waitFor(() =>
+      expect(view.getByTestId('review-state')).toHaveTextContent('LOCKED UNTIL REVEAL'),
+    );
+    expect(store.retryProcessing).toHaveBeenCalledWith('contribution-review-ui');
+    expect(store.completeProcessing).toHaveBeenCalledWith('contribution-review-ui');
   });
 });
