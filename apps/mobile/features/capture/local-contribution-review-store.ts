@@ -1,5 +1,9 @@
 import {
   completeProcessing,
+  deleteContribution as deleteContributionPolicy,
+  deletionRecordsFromAuditEvents,
+  failProcessing as failProcessingPolicy,
+  retryProcessing as retryProcessingPolicy,
   startProcessing,
   validateContributionForSubmission,
   type PolicyRejected,
@@ -65,12 +69,15 @@ export type LocalContributionReviewOutcome =
 export interface LocalContributionReviewStore {
   discard(contributionId: ContributionId): Promise<void>;
   completeProcessing(contributionId: ContributionId): Promise<LocalContributionReviewOutcome>;
+  deleteContribution(contributionId: ContributionId): Promise<LocalContributionReviewOutcome>;
+  failProcessing(contributionId: ContributionId): Promise<LocalContributionReviewOutcome>;
   load(): Promise<LocalContributionReviewSnapshot>;
+  retryProcessing(contributionId: ContributionId): Promise<LocalContributionReviewOutcome>;
   startProcessing(contributionId: ContributionId): Promise<LocalContributionReviewOutcome>;
 }
 
 export interface LocalContributionReviewRepository {
-  readonly audit: Pick<AuditRepositoryPort, 'append'>;
+  readonly audit: Pick<AuditRepositoryPort, 'append' | 'list'>;
   readonly contributions: Pick<
     ContributionRepositoryPort,
     'get' | 'listByCycle' | 'remove' | 'save'
@@ -85,6 +92,7 @@ export interface LocalContributionReviewStoreOptions {
   readonly nextAuditId?: (action: string, contributionId: ContributionId) => AuditEventId;
   readonly now?: () => IsoTimestamp;
   readonly repository: LocalContributionReviewRepository;
+  readonly weekKey?: (at: IsoTimestamp) => string;
 }
 
 export function createLocalContributionReviewStore({
@@ -92,6 +100,7 @@ export function createLocalContributionReviewStore({
   nextAuditId,
   now = () => new Date().toISOString(),
   repository,
+  weekKey = toSimulatedWeekKey,
 }: LocalContributionReviewStoreOptions): LocalContributionReviewStore {
   let auditSequence = 0;
   const createAuditId =
@@ -145,6 +154,72 @@ export function createLocalContributionReviewStore({
       return toReviewOutcome(outcome, outcome.value);
     },
 
+    async deleteContribution(contributionId) {
+      const context = await getContributionContext(repository, contributionId, now);
+      assertActiveReviewContribution(context, context.contribution);
+      const { activeMemberId, contribution, cycle, group } = context;
+      const at = now();
+      const outcome = deleteContributionPolicy({
+        actorMemberId: activeMemberId,
+        context: {
+          at,
+          auditEventId: createAuditId('contribution-deleted', contribution.id),
+        },
+        contribution,
+        cycle,
+        group,
+        priorDeletions: deletionRecordsFromAuditEvents(await repository.audit.list()),
+        weekKey: weekKey(at),
+      });
+      if (!outcome.accepted) {
+        await repository.audit.append(outcome.auditEvent);
+        return {
+          accepted: false,
+          auditEvent: outcome.auditEvent,
+          code: outcome.code,
+          reason: outcome.reason,
+          review: toReview(contribution),
+        };
+      }
+
+      if (contribution.localUri) {
+        await files.remove(contribution.localUri);
+      }
+      const deletedContribution: Contribution = {
+        ...outcome.value.contribution,
+        localUri: null,
+      };
+      await repository.contributions.save(deletedContribution);
+      await repository.audit.append(outcome.auditEvent);
+      return {
+        accepted: true,
+        auditEvent: outcome.auditEvent,
+        idempotent: outcome.idempotent,
+        review: toReview(deletedContribution),
+      };
+    },
+
+    async failProcessing(contributionId) {
+      const context = await getContributionContext(repository, contributionId, now);
+      assertActiveReviewContribution(context, context.contribution);
+      const { contribution } = context;
+      const outcome = failProcessingPolicy({
+        contribution,
+        context: {
+          at: now(),
+          auditEventId: createAuditId('processing-failed', contribution.id),
+        },
+      });
+      if (!outcome.accepted) {
+        await repository.audit.append(outcome.auditEvent);
+        return toReviewOutcome(outcome, contribution);
+      }
+
+      await repository.contributions.save(outcome.value);
+      await repository.audit.append(outcome.auditEvent);
+      return toReviewOutcome(outcome, outcome.value);
+    },
+
     async load() {
       const context = await getReviewContext(repository, now);
       if (!context.cycle || !context.activeMemberId) {
@@ -157,6 +232,27 @@ export function createLocalContributionReviewStore({
         cycle: context.cycle,
         review: contribution ? toReview(contribution) : null,
       };
+    },
+
+    async retryProcessing(contributionId) {
+      const context = await getContributionContext(repository, contributionId, now);
+      assertActiveReviewContribution(context, context.contribution);
+      const { contribution } = context;
+      const outcome = retryProcessingPolicy({
+        contribution,
+        context: {
+          at: now(),
+          auditEventId: createAuditId('processing-retried', contribution.id),
+        },
+      });
+      if (!outcome.accepted) {
+        await repository.audit.append(outcome.auditEvent);
+        return toReviewOutcome(outcome, contribution);
+      }
+
+      await repository.contributions.save(outcome.value);
+      await repository.audit.append(outcome.auditEvent);
+      return toReviewOutcome(outcome, outcome.value);
     },
 
     async startProcessing(contributionId) {
@@ -333,4 +429,21 @@ function toReviewOutcome<T extends Contribution>(
     idempotent: outcome.idempotent,
     review: toReview(outcome.value),
   };
+}
+
+export function toSimulatedWeekKey(at: IsoTimestamp): string {
+  const parsed = new Date(at);
+  if (!Number.isFinite(parsed.getTime())) {
+    throw new Error('The simulated week is not available yet.');
+  }
+
+  const date = new Date(
+    Date.UTC(parsed.getUTCFullYear(), parsed.getUTCMonth(), parsed.getUTCDate()),
+  );
+  const isoDay = date.getUTCDay() || 7;
+  date.setUTCDate(date.getUTCDate() + 4 - isoDay);
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  const week = Math.ceil(((date.getTime() - yearStart.getTime()) / 86_400_000 + 1) / 7);
+
+  return `${date.getUTCFullYear()}-W${String(week).padStart(2, '0')}`;
 }

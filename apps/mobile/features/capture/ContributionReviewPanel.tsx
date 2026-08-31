@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { FrameCard } from '../../components/FrameCard';
 import { colors, radii, spacing, typography } from '../../components/tokens';
 import type { HapticCue, HapticsPort } from '../../platform/haptics/feedback';
+import { MAX_PROCESSING_ATTEMPTS } from '../../../../packages/domain/src/policy/index.ts';
 import type {
   LocalContributionReview,
   LocalContributionReviewSnapshot,
@@ -12,19 +13,25 @@ import type {
 
 export const PROCESSING_SIMULATION_DELAY_MS = 450;
 
+export interface ProcessingSimulationPort {
+  shouldFail(review: LocalContributionReview): boolean;
+}
+
 type ContributionReviewPanelProps = {
   haptics?: HapticsPort;
+  processingSimulation?: ProcessingSimulationPort;
   refreshToken?: number;
   store?: LocalContributionReviewStore;
 };
 
 type ReviewPhase = 'empty' | 'error' | 'locked' | 'loading' | 'processing' | 'review';
-type PendingAction = 'completing' | 'discarding' | 'submitting' | null;
+type PendingAction = 'completing' | 'deleting' | 'discarding' | 'retrying' | 'submitting' | null;
 
 const actionError = 'The local contribution could not be updated. Try again.';
 
 export function ContributionReviewPanel({
   haptics,
+  processingSimulation,
   refreshToken = 0,
   store: providedStore,
 }: ContributionReviewPanelProps) {
@@ -98,13 +105,15 @@ export function ContributionReviewPanel({
   }, [clearCompletionTimer, providedStore, refreshToken, retryToken]);
 
   const finishProcessing = useCallback(
-    async (reviewStore: LocalContributionReviewStore, contributionId: string) => {
+    async (reviewStore: LocalContributionReviewStore, review: LocalContributionReview) => {
       completionTimerRef.current = null;
       setPendingAction('completing');
       setActionErrorMessage(null);
       setPhase('processing');
       try {
-        const outcome = await reviewStore.completeProcessing(contributionId);
+        const outcome = processingSimulation?.shouldFail(review)
+          ? await reviewStore.failProcessing(review.id)
+          : await reviewStore.completeProcessing(review.id);
         if (!mountedRef.current) {
           return;
         }
@@ -115,6 +124,11 @@ export function ContributionReviewPanel({
         if (!outcome.accepted) {
           setActionErrorMessage(outcome.reason);
           setPhase(outcome.review?.state === 'processing' ? 'processing' : 'review');
+          return;
+        }
+        if (outcome.review.state === 'failed') {
+          setActionErrorMessage('Processing did not finish. Retry once locally.');
+          setPhase('review');
           return;
         }
         setPhase('locked');
@@ -128,7 +142,7 @@ export function ContributionReviewPanel({
         setPhase('processing');
       }
     },
-    [haptics],
+    [haptics, processingSimulation],
   );
 
   const submit = useCallback(async () => {
@@ -158,7 +172,7 @@ export function ContributionReviewPanel({
       setSnapshot((current) => (current ? { ...current, review: outcome.review } : current));
       setPendingAction(null);
       completionTimerRef.current = setTimeout(() => {
-        void finishProcessing(store, review.id);
+        void finishProcessing(store, outcome.review);
       }, PROCESSING_SIMULATION_DELAY_MS);
     } catch {
       if (!mountedRef.current) {
@@ -176,7 +190,7 @@ export function ContributionReviewPanel({
       return;
     }
     clearCompletionTimer();
-    void finishProcessing(store, review.id);
+    void finishProcessing(store, review);
   }, [clearCompletionTimer, finishProcessing, pendingAction, snapshot, store]);
 
   const discard = useCallback(async () => {
@@ -205,6 +219,84 @@ export function ContributionReviewPanel({
     }
   }, [pendingAction, snapshot, store]);
 
+  const deleteContribution = useCallback(async () => {
+    const review = snapshot?.review;
+    if (
+      !store ||
+      !review ||
+      (review.state !== 'captured' && review.state !== 'failed' && review.state !== 'locked') ||
+      pendingAction !== null
+    ) {
+      return;
+    }
+
+    setPendingAction('deleting');
+    setActionErrorMessage(null);
+    try {
+      const outcome = await store.deleteContribution(review.id);
+      if (!mountedRef.current) {
+        return;
+      }
+      setPendingAction(null);
+      if (!outcome.accepted) {
+        setActionErrorMessage(outcome.reason);
+        setSnapshot((current) =>
+          current && outcome.review ? { ...current, review: outcome.review } : current,
+        );
+        setPhase(phaseForReview(outcome.review));
+        return;
+      }
+      setSnapshot((current) => (current ? { ...current, review: null } : current));
+      setPhase('empty');
+    } catch {
+      if (!mountedRef.current) {
+        return;
+      }
+      setPendingAction(null);
+      setActionErrorMessage(actionError);
+      setPhase(phaseForReview(review));
+    }
+  }, [pendingAction, snapshot, store]);
+
+  const retryProcessing = useCallback(async () => {
+    const review = snapshot?.review;
+    if (!store || !review || review.state !== 'failed' || pendingAction !== null) {
+      return;
+    }
+
+    setPendingAction('retrying');
+    setActionErrorMessage(null);
+    try {
+      const outcome = await store.retryProcessing(review.id);
+      if (!mountedRef.current) {
+        return;
+      }
+      if (!outcome.accepted) {
+        setPendingAction(null);
+        setActionErrorMessage(outcome.reason);
+        setSnapshot((current) =>
+          current && outcome.review ? { ...current, review: outcome.review } : current,
+        );
+        setPhase('review');
+        return;
+      }
+
+      setSnapshot((current) => (current ? { ...current, review: outcome.review } : current));
+      setPendingAction(null);
+      setPhase('processing');
+      completionTimerRef.current = setTimeout(() => {
+        void finishProcessing(store, outcome.review);
+      }, PROCESSING_SIMULATION_DELAY_MS);
+    } catch {
+      if (!mountedRef.current) {
+        return;
+      }
+      setPendingAction(null);
+      setActionErrorMessage(actionError);
+      setPhase('review');
+    }
+  }, [finishProcessing, pendingAction, snapshot, store]);
+
   const retry = useCallback(() => {
     setRetryToken((current) => current + 1);
   }, []);
@@ -218,7 +310,9 @@ export function ContributionReviewPanel({
         <ReviewCard
           actionErrorMessage={actionErrorMessage}
           onComplete={complete}
+          onDelete={deleteContribution}
           onDiscard={discard}
+          onRetryProcessing={retryProcessing}
           onSubmit={submit}
           pendingAction={pendingAction}
           phase={phase}
@@ -297,7 +391,9 @@ function EmptyState() {
 function ReviewCard({
   actionErrorMessage,
   onComplete,
+  onDelete,
   onDiscard,
+  onRetryProcessing,
   onSubmit,
   pendingAction,
   phase,
@@ -305,17 +401,29 @@ function ReviewCard({
 }: {
   actionErrorMessage: string | null;
   onComplete: () => void;
+  onDelete: () => void;
   onDiscard: () => void;
+  onRetryProcessing: () => void;
   onSubmit: () => void;
   pendingAction: PendingAction;
   phase: ReviewPhase;
   review: LocalContributionReview;
 }) {
+  const [deleteConfirmationVisible, setDeleteConfirmationVisible] = useState(false);
   const mediaLabel = review.mediaKind === 'photo' ? 'PHOTO' : 'VIDEO';
   const statusLabel = reviewStatusLabel(phase, review.state);
   const statusDescription = `${mediaLabel} capture review, ${statusLabel}. Media remains hidden until reveal.`;
   const canSubmit = review.state === 'captured' && phase === 'review';
   const canDiscard = review.state === 'captured' && phase === 'review';
+  const canDelete =
+    (review.state === 'captured' || review.state === 'failed' || review.state === 'locked') &&
+    phase !== 'processing';
+  const canRetry = review.state === 'failed' && review.processingAttempt < MAX_PROCESSING_ATTEMPTS;
+
+  const confirmDelete = () => {
+    setDeleteConfirmationVisible(false);
+    onDelete();
+  };
 
   return (
     <FrameCard
@@ -374,10 +482,43 @@ function ReviewCard({
         </Text>
       ) : null}
 
-      {phase === 'locked' ? (
-        <Text style={styles.lockedCopy} testID="review-locked-note">
-          LOCKED LOCALLY · HELD UNTIL THE GROUP REVEAL.
-        </Text>
+      {deleteConfirmationVisible ? (
+        <View style={styles.deleteConfirmation} testID="review-delete-confirmation">
+          <Text style={styles.deleteTitle}>DELETE THIS CONTRIBUTION?</Text>
+          <Text style={styles.stateCopy}>
+            The app-managed local file will be removed. This uses the one deletion allowed in the
+            simulated week.
+          </Text>
+          <View style={styles.actionStack}>
+            <ActionButton
+              disabled={pendingAction !== null}
+              label="KEEP CONTRIBUTION"
+              onPress={() => setDeleteConfirmationVisible(false)}
+              secondary
+              testID="review-delete-cancel"
+            />
+            <ActionButton
+              danger
+              disabled={pendingAction !== null}
+              label={pendingAction === 'deleting' ? 'DELETING…' : 'DELETE CONTRIBUTION'}
+              onPress={confirmDelete}
+              testID="review-delete-confirm"
+            />
+          </View>
+        </View>
+      ) : phase === 'locked' ? (
+        <View style={styles.actionStack}>
+          <Text style={styles.lockedCopy} testID="review-locked-note">
+            LOCKED LOCALLY · HELD UNTIL THE GROUP REVEAL.
+          </Text>
+          <ActionButton
+            disabled={!canDelete || pendingAction !== null}
+            label="DELETE CONTRIBUTION"
+            onPress={() => setDeleteConfirmationVisible(true)}
+            secondary
+            testID="review-delete"
+          />
+        </View>
       ) : phase === 'processing' ? (
         <ActionButton
           disabled={pendingAction !== null}
@@ -392,9 +533,30 @@ function ReviewCard({
           testID="review-complete-processing"
         />
       ) : review.state === 'failed' ? (
-        <Text style={styles.errorCopy} testID="review-processing-delayed">
-          PROCESSING DID NOT FINISH. RETRY CONTROLS ARRIVE IN THE NEXT LIFECYCLE SLICE.
-        </Text>
+        <View style={styles.actionStack}>
+          <Text
+            accessibilityRole="alert"
+            style={styles.errorCopy}
+            testID="review-processing-delayed"
+          >
+            PROCESSING DID NOT FINISH. {canRetry ? 'RETRY ONCE LOCALLY.' : 'RETRY LIMIT REACHED.'}
+          </Text>
+          {canRetry ? (
+            <ActionButton
+              disabled={pendingAction !== null}
+              label={pendingAction === 'retrying' ? 'RETRYING…' : 'RETRY LOCAL PROCESSING'}
+              onPress={onRetryProcessing}
+              testID="review-retry-processing"
+            />
+          ) : null}
+          <ActionButton
+            disabled={!canDelete || pendingAction !== null}
+            label="DELETE CONTRIBUTION"
+            onPress={() => setDeleteConfirmationVisible(true)}
+            secondary
+            testID="review-delete"
+          />
+        </View>
       ) : (
         <View style={styles.actionStack}>
           <ActionButton
@@ -409,6 +571,13 @@ function ReviewCard({
             onPress={onDiscard}
             secondary
             testID="review-discard"
+          />
+          <ActionButton
+            disabled={!canDelete || pendingAction !== null}
+            label="DELETE CONTRIBUTION"
+            onPress={() => setDeleteConfirmationVisible(true)}
+            secondary
+            testID="review-delete"
           />
         </View>
       )}
@@ -431,12 +600,14 @@ function ReviewDetail({ label, testID, value }: { label: string; testID: string;
 }
 
 function ActionButton({
+  danger = false,
   disabled,
   label,
   onPress,
   secondary = false,
   testID,
 }: {
+  danger?: boolean;
   disabled: boolean;
   label: string;
   onPress: () => void;
@@ -452,13 +623,17 @@ function ActionButton({
       onPress={onPress}
       style={({ pressed }) => [
         styles.actionButton,
-        secondary ? styles.actionButtonSecondary : styles.actionButtonPrimary,
+        danger
+          ? styles.actionButtonDanger
+          : secondary
+            ? styles.actionButtonSecondary
+            : styles.actionButtonPrimary,
         pressed && styles.pressed,
         disabled && styles.disabled,
       ]}
       testID={testID}
     >
-      <Text style={secondary ? styles.actionLabelSecondary : styles.actionLabelPrimary}>
+      <Text style={secondary && !danger ? styles.actionLabelSecondary : styles.actionLabelPrimary}>
         {label}
       </Text>
     </Pressable>
@@ -510,6 +685,11 @@ const styles = StyleSheet.create({
     borderColor: colors.acid,
     borderWidth: 1,
   },
+  actionButtonDanger: {
+    backgroundColor: colors.flash,
+    borderColor: colors.flash,
+    borderWidth: 1,
+  },
   actionButtonSecondary: {
     borderColor: colors.paper,
     borderWidth: 1,
@@ -531,6 +711,16 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: spacing.micro,
     paddingBottom: spacing.compact,
+  },
+  deleteConfirmation: {
+    borderColor: colors.flash,
+    borderWidth: 1,
+    gap: spacing.compact,
+    padding: spacing.inset,
+  },
+  deleteTitle: {
+    ...typography.utility,
+    color: colors.flash,
   },
   detailLabel: {
     ...typography.utility,

@@ -48,6 +48,7 @@ function createHarness(
       append: jest.fn(async (event: AuditEvent) => {
         auditEvents.push(event);
       }),
+      list: jest.fn(async () => auditEvents),
     },
     contributions: {
       get: jest.fn(
@@ -177,5 +178,104 @@ describe('Local contribution review store', () => {
       subjectId: candidate.id,
       type: 'local.review.discarded',
     });
+  });
+
+  it('deletes one locked local contribution, dereferences its file, and restores the quota', async () => {
+    const candidate = createContribution({ id: 'contribution-review-delete', state: 'locked' });
+    const { auditEvents, files, records, store } = createHarness(candidate);
+
+    const outcome = await store.deleteContribution(candidate.id);
+
+    expect(outcome).toMatchObject({
+      accepted: true,
+      review: { fileStatus: 'missing', state: 'deleted' },
+    });
+    expect(files.remove).toHaveBeenCalledWith(candidate.localUri);
+    expect(records.find(({ id }) => id === candidate.id)).toMatchObject({
+      deletedAt: '2026-08-30T11:00:00.000Z',
+      localUri: null,
+      state: 'deleted',
+    });
+    expect(getContributionBudget(records, 'member-ava', seededCycle.id)).toMatchObject({
+      usedCount: 1,
+      usedDurationSeconds: 3,
+    });
+    expect(auditEvents.at(-1)).toMatchObject({ type: 'policy.contribution.deleted' });
+  });
+
+  it('refuses a second same-week delete without altering its file, contribution, or quota', async () => {
+    const candidate = createContribution({
+      id: 'contribution-review-second-delete',
+      state: 'locked',
+    });
+    const { auditEvents, files, records, repository, store } = createHarness(candidate);
+
+    await store.deleteContribution(candidate.id);
+    const remaining = createContribution({
+      durationSeconds: 8,
+      id: 'contribution-review-delete-refused',
+      state: 'locked',
+    });
+    records.push(remaining);
+    const beforeBudget = getContributionBudget(records, 'member-ava', seededCycle.id);
+
+    const outcome = await store.deleteContribution(remaining.id);
+
+    expect(outcome).toMatchObject({
+      accepted: false,
+      code: 'delete-limit-reached',
+      review: { id: remaining.id, state: 'locked' },
+    });
+    expect(files.remove).toHaveBeenCalledTimes(1);
+    expect(repository.contributions.save).toHaveBeenCalledTimes(1);
+    expect(records.find(({ id }) => id === remaining.id)).toEqual(remaining);
+    expect(getContributionBudget(records, 'member-ava', seededCycle.id)).toEqual(beforeBudget);
+    expect(auditEvents.at(-1)).toMatchObject({ type: 'policy.rejected' });
+  });
+
+  it('marks a processing failure and retries once without duplicating the contribution', async () => {
+    const candidate = createContribution({
+      id: 'contribution-review-retry',
+      processingAttempt: 1,
+      state: 'processing',
+    });
+    const { auditEvents, records, store } = createHarness(candidate);
+
+    const failed = await store.failProcessing(candidate.id);
+    expect(failed).toMatchObject({
+      accepted: true,
+      review: { processingAttempt: 1, state: 'failed' },
+    });
+    const retried = await store.retryProcessing(candidate.id);
+    expect(retried).toMatchObject({
+      accepted: true,
+      review: { processingAttempt: 2, state: 'processing' },
+    });
+    const completed = await store.completeProcessing(candidate.id);
+
+    expect(completed).toMatchObject({
+      accepted: true,
+      review: { processingAttempt: 2, state: 'locked' },
+    });
+    expect(records.filter(({ id }) => id === candidate.id)).toHaveLength(1);
+    expect(auditEvents.map(({ type }) => type)).toEqual([
+      'policy.processing.failed',
+      'policy.processing.retried',
+      'policy.processing.completed',
+    ]);
+  });
+
+  it('preserves the stored contribution if removing its local file fails during deletion', async () => {
+    const candidate = createContribution({
+      id: 'contribution-review-delete-file-error',
+      state: 'locked',
+    });
+    const { files, records, repository, store } = createHarness(candidate);
+    jest.spyOn(files, 'remove').mockRejectedValueOnce(new Error('storage unavailable'));
+
+    await expect(store.deleteContribution(candidate.id)).rejects.toThrow('storage unavailable');
+
+    expect(repository.contributions.save).not.toHaveBeenCalled();
+    expect(records.find(({ id }) => id === candidate.id)).toEqual(candidate);
   });
 });
