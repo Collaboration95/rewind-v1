@@ -1,7 +1,7 @@
 import type { LocalSqliteDriver } from './local-sqlite';
 
 export const DATABASE_NAME = 'rewind-v1.db';
-export const LATEST_SCHEMA_VERSION = 2;
+export const LATEST_SCHEMA_VERSION = 3;
 
 export interface Migration {
   readonly version: number;
@@ -124,6 +124,10 @@ export const MIGRATIONS: readonly Migration[] = [
         );
       `,
     ],
+  },
+  {
+    version: 3,
+    statements: ['ALTER TABLE reminder_preferences ADD COLUMN demo_notification_id TEXT;'],
   },
 ];
 

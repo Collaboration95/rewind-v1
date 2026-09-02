@@ -108,7 +108,7 @@ async function insertFixture(database: LocalSqliteDriver, fixture: DomainFixture
   );
 
   await database.runAsync(
-    'INSERT OR IGNORE INTO reminder_preferences (member_id, enabled, weekday, hour, minute, notification_id) VALUES (?, ?, ?, ?, ?, ?)',
+    'INSERT OR IGNORE INTO reminder_preferences (member_id, enabled, weekday, hour, minute, notification_id, demo_notification_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
     [
       fixture.reminder.memberId,
       fixture.reminder.enabled ? 1 : 0,
@@ -116,6 +116,7 @@ async function insertFixture(database: LocalSqliteDriver, fixture: DomainFixture
       fixture.reminder.hour,
       fixture.reminder.minute,
       fixture.reminder.notificationId,
+      fixture.reminder.demoNotificationId,
     ],
   );
 

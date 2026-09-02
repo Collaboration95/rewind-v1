@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Link } from 'expo-router';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { FrameCard } from '../../components/FrameCard';
 import { ScreenFrame } from '../../components/ScreenFrame';
@@ -38,6 +39,18 @@ export default function HomeScreen({ homeStore }: HomeScreenProps = {}) {
       <LocalGroupHome store={homeStore} />
 
       <LocalProfileSwitcher />
+
+      <Link href="/settings" asChild>
+        <Pressable
+          accessibilityLabel="Open local reminder settings"
+          accessibilityRole="button"
+          style={({ pressed }) => [styles.settingsLink, pressed && styles.settingsLinkPressed]}
+          testID="home-reminder-settings"
+        >
+          <Text style={styles.settingsLabel}>REMINDER SETTINGS</Text>
+          <Text style={styles.settingsHint}>LOCAL DEVICE SCHEDULE + PERMISSION</Text>
+        </Pressable>
+      </Link>
 
       <View style={styles.footerNote}>
         <Text style={styles.footerLabel}>THE FIRST FRAME</Text>
@@ -86,6 +99,26 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: colors.muted,
     maxWidth: 280,
+  },
+  settingsHint: {
+    ...typography.utility,
+    color: colors.muted,
+    fontSize: 10,
+    marginTop: spacing.micro,
+  },
+  settingsLabel: {
+    ...typography.label,
+    color: colors.acid,
+  },
+  settingsLink: {
+    borderColor: colors.line,
+    borderWidth: 1,
+    minHeight: 56,
+    paddingHorizontal: spacing.inset,
+    paddingVertical: spacing.compact,
+  },
+  settingsLinkPressed: {
+    backgroundColor: colors.surface,
   },
   title: {
     ...typography.display,

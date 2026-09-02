@@ -30,6 +30,21 @@ test('four-tab route shell has an accessible stable navigation contract', () => 
   assert.match(tabGlyph, /focused\s*\?/);
 });
 
+test('settings remains a secondary route with a reachable local reminder entry point', () => {
+  assert.ok(existsSync(join(appRoot, 'app', 'settings.tsx')), 'settings route exists');
+
+  const rootLayout = readFileSync(join(appRoot, 'app', '_layout.tsx'), 'utf8');
+  const homeRoute = readFileSync(join(tabsRoot, 'index.tsx'), 'utf8');
+  const settingsRoute = readFileSync(join(appRoot, 'app', 'settings.tsx'), 'utf8');
+
+  assert.match(rootLayout, /<Stack\.Screen name="settings"/);
+  assert.match(homeRoute, /href="\/settings"/);
+  assert.match(homeRoute, /home-reminder-settings/);
+  assert.match(settingsRoute, /screen-settings/);
+  assert.match(settingsRoute, /settings-back-home/);
+  assert.match(settingsRoute, /LocalReminderPanel/);
+});
+
 test('each route exposes a stable screen testID and no copied reference branding', () => {
   const routeFiles = ['index', 'camera', 'chat', 'archive'];
   const source = routeFiles

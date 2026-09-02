@@ -16,6 +16,7 @@ const result = spawnSync(
     'tests/video-capture-contract.test.mjs',
     'tests/photo-capture-contract.test.mjs',
     'tests/vignette-haptics-contract.test.mjs',
+    'tests/reminder-contract.test.mjs',
     'tests/contribution-review-contract.test.mjs',
     'tests/home-contract.test.mjs',
     'tests/local-database.test.mjs',

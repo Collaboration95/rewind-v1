@@ -113,6 +113,7 @@ export interface Capsule {
 }
 
 export interface ReminderPreference {
+  readonly demoNotificationId: string | null;
   readonly memberId: MemberId;
   readonly enabled: boolean;
   readonly weekday: number;
