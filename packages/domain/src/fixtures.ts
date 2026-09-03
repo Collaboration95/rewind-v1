@@ -99,6 +99,7 @@ export const seededCapsule: Capsule = {
 };
 
 export const seededReminder: ReminderPreference = {
+  demoNotificationId: null,
   memberId: "member-ava",
   enabled: false,
   weekday: 0,

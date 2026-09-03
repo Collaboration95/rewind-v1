@@ -40,6 +40,7 @@ describe('Home route smoke', () => {
 
     expect(getByRole('header')).toBeTruthy();
     expect(getByLabelText('Local-only prototype')).toBeTruthy();
+    expect(getByLabelText('Open local reminder settings')).toBeTruthy();
     expect(getByTestId('screen-home')).toBeTruthy();
     expect(getByTestId('home-title')).toBeTruthy();
   });

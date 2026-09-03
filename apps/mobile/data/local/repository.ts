@@ -89,6 +89,7 @@ type CapsuleRow = {
 };
 
 type ReminderRow = {
+  demo_notification_id: string | null;
   enabled: number;
   hour: number;
   member_id: string;
@@ -409,7 +410,7 @@ export class SQLiteDomainRepository implements DomainRepositoryPort {
 
   private async getReminder(memberId: string): Promise<ReminderPreference | null> {
     const row = await this.database.getFirstAsync<ReminderRow>(
-      `SELECT member_id, enabled, weekday, hour, minute, notification_id
+      `SELECT member_id, enabled, weekday, hour, minute, notification_id, demo_notification_id
        FROM reminder_preferences WHERE member_id = ?`,
       [memberId],
     );
@@ -419,14 +420,15 @@ export class SQLiteDomainRepository implements DomainRepositoryPort {
   private async saveReminder(preference: ReminderPreference): Promise<void> {
     await this.database.runAsync(
       `INSERT INTO reminder_preferences
-        (member_id, enabled, weekday, hour, minute, notification_id)
-       VALUES (?, ?, ?, ?, ?, ?)
+        (member_id, enabled, weekday, hour, minute, notification_id, demo_notification_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT(member_id) DO UPDATE SET
          enabled = excluded.enabled,
          weekday = excluded.weekday,
          hour = excluded.hour,
          minute = excluded.minute,
-         notification_id = excluded.notification_id`,
+         notification_id = excluded.notification_id,
+         demo_notification_id = excluded.demo_notification_id`,
       [
         preference.memberId,
         preference.enabled ? 1 : 0,
@@ -434,6 +436,7 @@ export class SQLiteDomainRepository implements DomainRepositoryPort {
         preference.hour,
         preference.minute,
         preference.notificationId,
+        preference.demoNotificationId,
       ],
     );
   }
@@ -551,6 +554,7 @@ function mapCapsule(row: CapsuleRow): Capsule {
 
 function mapReminder(row: ReminderRow): ReminderPreference {
   return {
+    demoNotificationId: row.demo_notification_id,
     enabled: row.enabled === 1,
     hour: row.hour,
     memberId: row.member_id,

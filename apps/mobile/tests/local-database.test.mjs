@@ -97,7 +97,13 @@ test('migrations, seed, repository reads, relaunch, and reset use real SQLite', 
       'contribution-video-demo',
     ]);
     assert.equal(reminder?.enabled, false);
+    assert.equal(reminder?.demoNotificationId, null);
     assert.equal(activeMemberId, 'member-ava');
+
+    await repository.reminders.save({
+      ...reminder,
+      demoNotificationId: 'demo-notification-relaunch',
+    });
 
     for (const [table, expectedCount] of [
       ['members', 5],
@@ -180,6 +186,10 @@ test('migrations, seed, repository reads, relaunch, and reset use real SQLite', 
       await relaunchedRepository.session.getActiveMemberId('group-rewind-demo'),
       'member-ben',
     );
+    assert.equal(
+      (await relaunchedRepository.reminders.get('member-ava'))?.demoNotificationId,
+      'demo-notification-relaunch',
+    );
 
     await resetDatabaseToSeed(driver);
     assert.equal((await relaunchedRepository.messages.listByGroup('group-rewind-demo')).length, 1);
@@ -192,6 +202,10 @@ test('migrations, seed, repository reads, relaunch, and reset use real SQLite', 
     assert.equal(
       await relaunchedRepository.session.getActiveMemberId('group-rewind-demo'),
       'member-ava',
+    );
+    assert.equal(
+      (await relaunchedRepository.reminders.get('member-ava'))?.demoNotificationId,
+      null,
     );
   } finally {
     driver.close();
