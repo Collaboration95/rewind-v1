@@ -11,7 +11,25 @@ export interface LocalDatabaseHandle {
   readonly resetToSeed: () => Promise<void>;
 }
 
-export async function openLocalDatabase(
+const openingDatabases = new Map<string, Promise<LocalDatabaseHandle>>();
+
+export function openLocalDatabase(
+  databaseName: string = DATABASE_NAME,
+): Promise<LocalDatabaseHandle> {
+  const existingOpening = openingDatabases.get(databaseName);
+  if (existingOpening) {
+    return existingOpening;
+  }
+
+  const opening = openLocalDatabaseUncached(databaseName).catch((error) => {
+    openingDatabases.delete(databaseName);
+    throw error;
+  });
+  openingDatabases.set(databaseName, opening);
+  return opening;
+}
+
+async function openLocalDatabaseUncached(
   databaseName: string = DATABASE_NAME,
 ): Promise<LocalDatabaseHandle> {
   const database = await openDatabaseAsync(databaseName);
