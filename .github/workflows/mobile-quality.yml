@@ -2,17 +2,16 @@ name: Mobile quality
 
 on:
   push:
+    branches:
+      - main
     paths:
       - "apps/mobile/**"
       - "packages/domain/**"
       - "Makefile"
       - ".github/workflows/mobile-quality.yml"
   pull_request:
-    paths:
-      - "apps/mobile/**"
-      - "packages/domain/**"
-      - "Makefile"
-      - ".github/workflows/mobile-quality.yml"
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
