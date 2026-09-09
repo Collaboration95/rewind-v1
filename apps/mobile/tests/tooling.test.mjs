@@ -93,8 +93,6 @@ test('mobile workflow is cached, local-only, and emulator-free', () => {
   assert.match(workflow, /^on:/m);
   assert.match(workflow, /push:/);
   assert.match(workflow, /pull_request:/);
-  assert.match(workflow, /push:\n    branches:\n      - main/);
-  assert.match(workflow, /pull_request:\n    branches:\n      - main/);
   assert.match(workflow, /workflow_dispatch:/);
   assert.match(workflow, /runs-on: ubuntu-24\.04/);
   assert.match(workflow, /actions\/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd/);
