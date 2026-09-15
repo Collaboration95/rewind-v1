@@ -230,7 +230,7 @@ export function createLocalContributionReviewStore({
       const contribution = latestReviewableContribution(contributions, context.activeMemberId);
       return {
         cycle: context.cycle,
-        review: contribution ? toReview(contribution) : null,
+        review: contribution ? await toReviewWithFileStatus(files, contribution) : null,
       };
     },
 
@@ -268,6 +268,7 @@ export function createLocalContributionReviewStore({
         throw new Error('The local contribution actor could not be restored.');
       }
 
+      const localFileAvailable = await persistedLocalFileExists(files, contribution.localUri);
       const existingContributions = await repository.contributions.listByCycle(cycle.id);
       const validation = validateContributionForSubmission({
         actorMemberId: activeMemberId,
@@ -275,14 +276,20 @@ export function createLocalContributionReviewStore({
           at: now(),
           auditEventId: createAuditId('submission-validated', contribution.id),
         },
-        contribution,
+        // Reuse the domain's existing safe local-file rejection while keeping
+        // the storage capability check in this application-layer adapter.
+        contribution: localFileAvailable ? contribution : { ...contribution, localUri: null },
         cycle,
         existingContributions,
         group,
       });
       await repository.audit.append(validation.auditEvent);
       if (!validation.accepted) {
-        return toReviewOutcome(validation, contribution);
+        return toReviewOutcome(
+          validation,
+          contribution,
+          localFileAvailable ? undefined : 'missing',
+        );
       }
 
       const outcome = startProcessing({
@@ -396,11 +403,27 @@ function latestReviewableContribution(
 }
 
 function toReview(contribution: Contribution): LocalContributionReview {
+  return toReviewWithStatus(contribution, undefined);
+}
+
+async function toReviewWithFileStatus(
+  files: LocalMediaFilePort,
+  contribution: Contribution,
+): Promise<LocalContributionReview> {
+  const available = await persistedLocalFileExists(files, contribution.localUri);
+  return toReviewWithStatus(contribution, available ? 'stored' : 'missing');
+}
+
+function toReviewWithStatus(
+  contribution: Contribution,
+  fileStatus: LocalReviewFileStatus | undefined,
+): LocalContributionReview {
   return {
     capturedAt: contribution.capturedAt,
     durationSeconds: contribution.durationSeconds,
     fileStatus:
-      contribution.localUri && contribution.localUri.trim().length > 0 ? 'stored' : 'missing',
+      fileStatus ??
+      (contribution.localUri && contribution.localUri.trim().length > 0 ? 'stored' : 'missing'),
     id: contribution.id,
     mediaKind: contribution.mediaKind,
     processingAttempt: contribution.processingAttempt,
@@ -412,6 +435,7 @@ function toReview(contribution: Contribution): LocalContributionReview {
 function toReviewOutcome<T extends Contribution>(
   outcome: PolicyOutcome<T>,
   fallbackContribution: Contribution,
+  fallbackFileStatus?: LocalReviewFileStatus,
 ): LocalContributionReviewOutcome {
   if (!outcome.accepted) {
     return {
@@ -419,7 +443,7 @@ function toReviewOutcome<T extends Contribution>(
       auditEvent: outcome.auditEvent,
       code: outcome.code,
       reason: outcome.reason,
-      review: toReview(fallbackContribution),
+      review: toReviewWithStatus(fallbackContribution, fallbackFileStatus),
     };
   }
 
@@ -429,6 +453,21 @@ function toReviewOutcome<T extends Contribution>(
     idempotent: outcome.idempotent,
     review: toReview(outcome.value),
   };
+}
+
+async function persistedLocalFileExists(
+  files: LocalMediaFilePort,
+  localUri: string | null,
+): Promise<boolean> {
+  if (!localUri || localUri.trim().length === 0) {
+    return false;
+  }
+
+  try {
+    return await files.exists(localUri);
+  } catch {
+    return false;
+  }
 }
 
 export function toSimulatedWeekKey(at: IsoTimestamp): string {
