@@ -1,7 +1,7 @@
 # Rewind audit index
 
-**Audit date:** 2026-09-04  
-**Audit target:** `main` at `46800ae1df8036ae3a5bf84cf0e2bce92ae9ac8f`  
+**Audit date:** 2026-09-04
+**Audit target:** `main` at `46800ae1df8036ae3a5bf84cf0e2bce92ae9ac8f`
 **Method:** repository, live GitHub Project/Issues/PRs, static checks, and a
 local web-runtime inspection. This is discovery only; no application behaviour
 was changed.
