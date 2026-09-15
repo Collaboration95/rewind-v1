@@ -157,6 +157,17 @@ describe('Contribution review and local lock flow', () => {
     expect(store.completeProcessing).not.toHaveBeenCalled();
   });
 
+  it('shows an actionable URI-free state when persisted media is unavailable', async () => {
+    const { store } = createStore({ initialReview: createReview({ fileStatus: 'missing' }) });
+    const view = await render(<ContributionReviewPanel store={store} />);
+
+    await waitFor(() => expect(view.getByTestId('review-file-status')).toBeTruthy());
+    expect(view.getByTestId('review-file-status')).toHaveTextContent(
+      /NOT AVAILABLE · CAPTURE AGAIN/,
+    );
+    expect(view.queryByText(/file:\/\//)).toBeNull();
+  });
+
   it('provides a clear discard action and restores the empty review state', async () => {
     const { store, getReview } = createStore();
     const view = await render(<ContributionReviewPanel store={store} />);

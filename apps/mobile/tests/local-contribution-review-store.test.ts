@@ -92,6 +92,38 @@ function createHarness(
 }
 
 describe('Local contribution review store', () => {
+  it.each([
+    ['photo', 'file:///documents/rewind-captures/missing-photo.jpg'],
+    ['video', 'file:///documents/rewind-captures/missing-video.mov'],
+  ])(
+    'rejects a missing persisted %s before processing or quota use',
+    async (mediaKind, localUri) => {
+      const candidate = createContribution({
+        id: `contribution-review-missing-${mediaKind}`,
+        localUri,
+        mediaKind: mediaKind as Contribution['mediaKind'],
+        durationSeconds: mediaKind === 'photo' ? 3 : 5,
+      });
+      const { auditEvents, files, repository, store } = createHarness(candidate);
+      jest.spyOn(files, 'exists').mockResolvedValue(false);
+
+      const initial = await store.load();
+      expect(initial.review).toMatchObject({ fileStatus: 'missing', mediaKind });
+
+      const outcome = await store.startProcessing(candidate.id);
+
+      expect(files.exists).toHaveBeenCalledWith(localUri);
+      expect(outcome).toMatchObject({
+        accepted: false,
+        code: 'local-file-missing',
+        reason: 'A local file is required before this contribution can be submitted.',
+        review: { fileStatus: 'missing', state: 'captured', mediaKind },
+      });
+      expect(repository.contributions.save).not.toHaveBeenCalled();
+      expect(auditEvents.at(-1)?.type).toBe('policy.rejected');
+    },
+  );
+
   it('loads a safe photo/video-neutral review and persists processing to lock', async () => {
     const candidate = createContribution({
       durationSeconds: 3,

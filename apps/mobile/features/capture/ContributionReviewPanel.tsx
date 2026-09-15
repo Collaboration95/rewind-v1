@@ -468,7 +468,11 @@ function ReviewCard({
         <ReviewDetail
           label="LOCAL FILE"
           testID="review-file-status"
-          value={review.fileStatus === 'stored' ? 'STORED ON THIS DEVICE' : 'NOT AVAILABLE'}
+          value={
+            review.fileStatus === 'stored'
+              ? 'STORED ON THIS DEVICE'
+              : 'NOT AVAILABLE · CAPTURE AGAIN'
+          }
         />
       </View>
 
